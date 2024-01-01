@@ -7,19 +7,26 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/mwildt/ceh-utils/pkg/utils"
 	"io"
+	"math/rand"
 	"os"
+	"time"
 )
 
 type FileLogRepository struct {
 	file   *os.File
 	path   string
 	values []Question
+	rand   *rand.Rand
+	logger utils.Logger
 }
 
 func CreateRepo(path string) (repo *FileLogRepository, err error) {
 	repo = &FileLogRepository{
-		path: path,
+		path:   path,
+		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
+		logger: utils.NewStdLogger("questions.repository"),
 	}
 	if err := repo.init(); err != nil {
 		return repo, err
@@ -33,8 +40,13 @@ func CreateRepo(path string) (repo *FileLogRepository, err error) {
 	return repo, err
 }
 
-func (repo *FileLogRepository) Save(question Question) error {
+func (repo *FileLogRepository) FindRandom(predicate utils.Predicate[Question]) (question Question, err error) {
+	candidates := utils.Filter(repo.values, predicate)
+	randomIndex := repo.rand.Intn(len(candidates))
+	return candidates[randomIndex], nil
+}
 
+func (repo *FileLogRepository) Save(question Question) error {
 	encoded, err := repo.encodeRecord(question)
 	if err != nil {
 		return err
@@ -122,6 +134,7 @@ func (repo *FileLogRepository) open() (err error) {
 }
 
 func (repo *FileLogRepository) load() (err error) {
+	repo.logger.Info("start load items from file-system (%s)", repo.filepath())
 	file, err := os.OpenFile(repo.filepath(), os.O_RDONLY, 0644)
 	if err != nil {
 		return err
@@ -132,6 +145,7 @@ func (repo *FileLogRepository) load() (err error) {
 		lenBytes := make([]byte, 4)
 		if _, err := io.ReadFull(file, lenBytes); err != nil {
 			if err == io.EOF {
+				repo.logger.Info("%d items loaded from file system", len(repo.values))
 				return nil
 			}
 			return err
@@ -147,6 +161,7 @@ func (repo *FileLogRepository) load() (err error) {
 		}
 		repo.values = append(repo.values, value)
 	}
+
 }
 
 func (repo *FileLogRepository) filepath() string {
@@ -157,7 +172,7 @@ func (repo *FileLogRepository) decodeRecord(record []byte) (question Question, e
 	encoding := base64.RawStdEncoding
 	jsonValue := make([]byte, encoding.DecodedLen(len(record)))
 	_, err = encoding.Decode(jsonValue, record)
-	fmt.Printf("JSON: \n|%s|\n-\n", jsonValue)
+	//fmt.Printf("JSON: \n|%s|\n-\n", jsonValue)
 	if err != nil {
 
 		return question, err

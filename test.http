@@ -1,0 +1,20 @@
+###
+POST localhost:8080/api/trainings/
+
+###
+GET localhost:8080/api/trainings/
+
+###
+GET localhost:8080/api/trainings/21d3a494-3ec6-4638-b0cf-401b80c34b2d
+
+###
+GET localhost:8080/api/questions/d7d5ab0b-0099-4769-82f8-1b246533360c
+
+###
+GET localhost:8080/api/history/21d3a494-3ec6-4638-b0cf-401b80c34b2d/0
+
+###
+PATCH localhost:8080/api/trainings/21d3a494-3ec6-4638-b0cf-401b80c34b2d
+Content-Type: application/json
+
+{"answer": "67b5b10f-38b7-4d4f-ad36-5026df0ff715"}
