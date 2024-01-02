@@ -25,7 +25,7 @@ func (controller *Controller) Routing(router routing.Routing) {
 
 func (controller *Controller) GetHistory(w http.ResponseWriter, r *http.Request) {
 	type responseDTO struct {
-		Id    uuid.UUID `json:"historyId"`
+		Id    uuid.UUID `json:"id"`
 		Total int       `json:"total"`
 	}
 

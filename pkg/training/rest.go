@@ -55,13 +55,19 @@ func mapGetTrainingDTO(t *Training) getTrainigDTO {
 		Challenge: t.Challenge.Id,
 		Updated:   t.Updated.Format(time.RFC3339),
 		Created:   t.Created.Format(time.RFC3339),
+		Stats: statsDTO{
+			t.stats.totalChallenges,
+			t.stats.passedChallenges,
+			t.stats.failedChallenges,
+			t.stats.currentChallengeAttempts,
+		},
 	}
 }
 
 func (controller *Controller) PatchById(w http.ResponseWriter, r *http.Request) {
 	type responseDTO struct {
-		Training getTrainigDTO `json:"training"`
-		Success  bool          `json:"success"`
+		getTrainigDTO
+		Success bool `json:"success"`
 	}
 
 	var requestDTO struct {
@@ -101,9 +107,17 @@ type createResponseDTO struct {
 	Id uuid.UUID `json:"id"`
 }
 
+type statsDTO struct {
+	TotalChallenges          int `json:"total"`
+	PassedChallenged         int `json:"passed"`
+	FailedChallenges         int `json:"failed"`
+	CurrentChallengeAttempts int `json:"currentAttempts"`
+}
+
 type getTrainigDTO struct {
 	Id        uuid.UUID `json:"id"`
 	Challenge uuid.UUID `json:"challenge"`
 	Updated   string    `json:"updated"`
 	Created   string    `json:"created"`
+	Stats     statsDTO  `json:"stats"`
 }

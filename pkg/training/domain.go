@@ -15,12 +15,35 @@ type event struct {
 	event interface{}
 }
 
+type Stats struct {
+	totalChallenges          int
+	passedChallenges         int
+	failedChallenges         int
+	currentChallengeAttempts int
+}
+
+func (stats *Stats) pass() {
+	stats.totalChallenges++
+	if stats.currentChallengeAttempts == 0 {
+		stats.passedChallenges++
+	}
+	stats.currentChallengeAttempts = 0
+}
+
+func (stats *Stats) fail() {
+	if stats.currentChallengeAttempts == 0 {
+		stats.failedChallenges++
+	}
+	stats.currentChallengeAttempts++
+}
+
 type Training struct {
 	Id        uuid.UUID
 	Challenge Challenge
 	Updated   time.Time
 	Created   time.Time
 	events    []event
+	stats     *Stats
 }
 
 type ChallengeProvider func() (Challenge, error)
@@ -37,6 +60,12 @@ func CreateTraining(nextChallenge ChallengeProvider) (training *Training, err er
 		Updated:   time.Now(),
 		Created:   time.Now(),
 		events:    []event{{"training.created", CreatedEvent{id}}},
+		stats: &Stats{
+			totalChallenges:          1,
+			passedChallenges:         0,
+			failedChallenges:         0,
+			currentChallengeAttempts: 0,
+		},
 	}, nil
 }
 
@@ -51,7 +80,7 @@ func (training *Training) Next(answerId uuid.UUID, nextChallenge ChallengeProvid
 	}})
 
 	if success {
-		//session.stats.pass()
+		training.stats.pass()
 		challenge, err := nextChallenge()
 		if err != nil {
 			return success, err
@@ -60,7 +89,7 @@ func (training *Training) Next(answerId uuid.UUID, nextChallenge ChallengeProvid
 		training.Updated = time.Now()
 		return success, err
 	} else {
-		//session.stats.fail()
+		training.stats.fail()
 		return success, nil
 	}
 }

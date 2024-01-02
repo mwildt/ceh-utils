@@ -1,0 +1,12 @@
+services:
+  ceh-trainer:
+    image: registry.ohrenpirat.de:5000/ohrenpirat/ceh-trainer:latest
+    build:
+      context: .
+      dockerfile: ceh-trainer.dockerfile
+#    environment:
+#      - LISTEN_ADDRESS=:8080
+#    volumes:
+#      - ./data:/data
+    ports:
+      - 8080:8080
