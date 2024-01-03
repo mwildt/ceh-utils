@@ -17,7 +17,7 @@ import (
 type FileLogRepository struct {
 	file   *os.File
 	path   string
-	values []Question
+	values map[uuid.UUID]Question
 	rand   *rand.Rand
 	logger utils.Logger
 }
@@ -27,6 +27,7 @@ func CreateRepo(path string) (repo *FileLogRepository, err error) {
 		path:   path,
 		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
 		logger: utils.NewStdLogger("questions.repository"),
+		values: make(map[uuid.UUID]Question),
 	}
 	if err := repo.init(); err != nil {
 		return repo, err
@@ -41,26 +42,29 @@ func CreateRepo(path string) (repo *FileLogRepository, err error) {
 }
 
 func (repo *FileLogRepository) FindRandom(predicate utils.Predicate[Question]) (question Question, err error) {
-	candidates := utils.Filter(repo.values, predicate)
+	candidates := utils.FilterValues(repo.values, predicate)
+	if len(candidates) == 0 {
+		return question, err
+	}
 	randomIndex := repo.rand.Intn(len(candidates))
 	return candidates[randomIndex], nil
 }
 
-func (repo *FileLogRepository) Save(question Question) error {
+func (repo *FileLogRepository) Save(question Question) (result Question, err error) {
 	encoded, err := repo.encodeRecord(question)
 	if err != nil {
-		return err
+		return question, err
 	}
 
 	buffLenBytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(buffLenBytes, uint32(len(encoded)))
 	if _, err := repo.file.Write(buffLenBytes); err != nil {
-		return err
+		return question, err
 	}
 	_, err = repo.file.Write(encoded)
 
-	repo.values = append(repo.values, question)
-	return err
+	repo.values[question.Id] = question
+	return question, err
 }
 
 func (repo *FileLogRepository) init() (err error) {
@@ -73,36 +77,30 @@ func (repo *FileLogRepository) init() (err error) {
 
 type QuestionPredicate func(q Question) bool
 
-func IdNotIn(uuids []uuid.UUID) QuestionPredicate {
+func IdNotIn(uuids []uuid.UUID) utils.Predicate[Question] {
 	keyMap := make(map[uuid.UUID]uuid.UUID)
 	for _, id := range uuids {
 		keyMap[id] = id
 	}
 	return func(q Question) bool {
 		_, exists := keyMap[q.Id]
-		return exists
+		return !exists
 	}
 }
 
-func IdEquals(value uuid.UUID) QuestionPredicate {
+func IdEquals(value uuid.UUID) utils.Predicate[Question] {
 	return func(q Question) bool {
 		return value == q.Id
 	}
 }
 
-func Not(predicate QuestionPredicate) QuestionPredicate {
-	return func(q Question) bool {
-		return !predicate(q)
-	}
-}
-
-func True() QuestionPredicate {
+func True() utils.Predicate[Question] {
 	return func(q Question) bool {
 		return true
 	}
 }
 
-func (repo *FileLogRepository) FindAll(predicate QuestionPredicate) (list []Question, err error) {
+func (repo *FileLogRepository) FindAll(predicate utils.Predicate[Question]) (list []Question, err error) {
 	for _, question := range repo.values {
 		if predicate(question) {
 			list = append(list, question)
@@ -111,7 +109,7 @@ func (repo *FileLogRepository) FindAll(predicate QuestionPredicate) (list []Ques
 	return list, err
 }
 
-func (repo *FileLogRepository) FindFirst(predicate QuestionPredicate) (question Question, exists bool) {
+func (repo *FileLogRepository) FindFirst(predicate utils.Predicate[Question]) (question Question, exists bool) {
 	for _, question := range repo.values {
 		if predicate(question) {
 			return question, true
@@ -120,7 +118,7 @@ func (repo *FileLogRepository) FindFirst(predicate QuestionPredicate) (question 
 	return question, false
 }
 
-func (repo *FileLogRepository) Contains(predicate QuestionPredicate) bool {
+func (repo *FileLogRepository) Contains(predicate utils.Predicate[Question]) bool {
 	_, exists := repo.FindFirst(predicate)
 	return exists
 }
@@ -159,7 +157,7 @@ func (repo *FileLogRepository) load() (err error) {
 		if err != nil {
 			return err
 		}
-		repo.values = append(repo.values, value)
+		repo.values[value.Id] = value
 	}
 
 }

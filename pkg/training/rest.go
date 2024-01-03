@@ -51,10 +51,12 @@ func (controller *Controller) GetAll(writer http.ResponseWriter, request *http.R
 
 func mapGetTrainingDTO(t *Training) getTrainigDTO {
 	return getTrainigDTO{
-		Id:        t.Id,
-		Challenge: t.Challenge.Id,
-		Updated:   t.Updated.Format(time.RFC3339),
-		Created:   t.Created.Format(time.RFC3339),
+		Id:                     t.Id,
+		Challenge:              t.CurrentChallenge.Id,
+		CurrentChallengeFailed: t.currentChallengeFailed,
+		CurrentLevel:           t.CurrentChallenge.Level,
+		Updated:                t.Updated.Format(time.RFC3339),
+		Created:                t.Created.Format(time.RFC3339),
 		Stats: statsDTO{
 			t.stats.totalChallenges,
 			t.stats.passedChallenges,
@@ -115,9 +117,11 @@ type statsDTO struct {
 }
 
 type getTrainigDTO struct {
-	Id        uuid.UUID `json:"id"`
-	Challenge uuid.UUID `json:"challenge"`
-	Updated   string    `json:"updated"`
-	Created   string    `json:"created"`
-	Stats     statsDTO  `json:"stats"`
+	Id                     uuid.UUID `json:"id"`
+	Challenge              uuid.UUID `json:"challenge"`
+	CurrentChallengeFailed bool      `json:"currentChallengeFailed"`
+	CurrentLevel           int       `json:"currentLevel"`
+	Updated                string    `json:"updated"`
+	Created                string    `json:"created"`
+	Stats                  statsDTO  `json:"stats"`
 }

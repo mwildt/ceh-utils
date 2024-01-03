@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/google/uuid"
 	"github.com/mwildt/ceh-utils/pkg/history"
 	"github.com/mwildt/ceh-utils/pkg/questions"
 	"github.com/mwildt/ceh-utils/pkg/training"
@@ -31,15 +32,18 @@ func main() {
 	if err = history.Subscribe(historyRepo); err != nil {
 		log.Fatal(err)
 	}
-	trainingController := training.NewRestController(trainingRepo, func() (training.Challenge, error) {
-		q, err := questionRepo.FindRandom(utils.True[questions.Question]())
+	trainingController := training.NewRestController(trainingRepo, func(excluedIds []uuid.UUID) (training.Challenge, error) {
+		q, err := questionRepo.FindRandom(questions.IdNotIn(excluedIds))
 		return training.Challenge{
 			Id:     q.Id,
 			Answer: q.AnswerId,
 		}, err
 	})
 
-	router := routing.NewRouter(
+	baseHandler := routing.NewRouter()
+
+	baseHandler.Route(
+		routing.Filtering(requestLoggingFilter(utils.NewStdLogger("http-request-trace"))),
 		questionsController.Routing,
 		trainingController.Routing,
 		history.NewRestController(historyRepo).Routing,
@@ -50,9 +54,17 @@ func main() {
 
 	err = http.ListenAndServe(
 		utils.GetEnvOrDefault("LISTEN_ADDRESS", ":8080"),
-		router)
+		baseHandler)
 
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func requestLoggingFilter(logger utils.Logger) routing.Filter {
+
+	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		logger.Info("%s %s", r.Method, r.URL.String())
+		next(w, r)
 	}
 }
