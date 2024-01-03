@@ -1,6 +1,6 @@
 services:
   ceh-trainer:
-    image: registry.ohrenpirat.de:5000/ohrenpirat/ceh-trainer:latest
+    image: registry.ohrenpirat.de:5000/mwildt/ceh-trainer-api:latest
     build:
       context: .
       dockerfile: ceh-trainer.dockerfile

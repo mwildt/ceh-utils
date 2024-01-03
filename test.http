@@ -18,3 +18,39 @@ PATCH localhost:8080/api/trainings/4a385476-794a-467c-85b9-d93acab86ffd
 Content-Type: application/json
 
 {"answer": "67b5b10f-38b7-4d4f-ad36-5026df0ff715"}
+
+###
+GET localhost:8080/api/questions/
+
+
+###
+GET localhost:8080/api/questions/66931fec-ce45-474d-8df3-849a41bb07a0
+
+
+###
+PATCH localhost:8080/api/questions/66931fec-ce45-474d-8df3-849a41bb07a0
+Content-Type: application/json
+
+{
+    "id": "66931fec-ce45-474d-8df3-849a41bb07a0",
+    "text": "Which among the following is the best example of the hacking concept called \"covering tracks\"?",
+    "choices": [
+      {
+        "id": "091e8c1f-f308-4110-8909-03a63f47af90",
+        "text": "After a system is breached, a hacker creates a backdoor to allow re-entry into a system."
+      },
+      {
+        "id": "4ef78e24-800e-4b68-8909-d31182c8c9f3",
+        "text": "During a cyberattack, a hacker injects a rootkit into a server."
+      },
+      {
+        "id": "cf55fdaa-8253-49a6-aa48-08faa3e0a9fc",
+        "text": "An attacker gains access to a server through an exploitable vulnerability"
+      },
+      {
+        "id": "e1a8d7ca-128a-44d1-a740-91c03013fd40",
+        "text": "During a cyberattack, a hacker corrupts the event logs on all machines."
+      }
+    ]
+  }
+
