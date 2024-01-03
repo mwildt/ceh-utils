@@ -29,6 +29,7 @@ GET localhost:8080/api/questions/66931fec-ce45-474d-8df3-849a41bb07a0
 
 ###
 PATCH localhost:8080/api/questions/66931fec-ce45-474d-8df3-849a41bb07a0
+x-api-token: R0VIRUlN
 Content-Type: application/json
 
 {

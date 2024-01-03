@@ -1,6 +1,7 @@
 package questions
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/mwildt/ceh-utils/pkg/utils"
@@ -21,7 +22,7 @@ func NewRestController(repo *FileLogRepository) *Controller {
 func (controller *Controller) Routing(router routing.Routing) {
 	router.HandleFunc(routing.Get("/api/questions/"), controller.GetAll)
 	router.HandleFunc(routing.Get("/api/questions/{questionId}"), controller.GetById)
-	router.HandleFunc(routing.Patch("/api/questions/{questionId}"), controller.PatchById)
+	router.HandleFunc(routing.Patch("/api/questions/{questionId}").Filter(apiSecured()), controller.PatchById)
 }
 
 func (controller *Controller) GetById(writer http.ResponseWriter, request *http.Request) {
@@ -63,9 +64,7 @@ func (controller *Controller) PatchById(writer http.ResponseWriter, request *htt
 
 		if err != nil {
 			utils.InternalServerError(writer, request)
-		}
-
-		if updated, err := controller.repo.Save(updated); err != nil {
+		} else if updated, err := controller.repo.Save(updated); err != nil {
 			utils.InternalServerError(writer, request)
 		} else {
 			utils.OkJson(writer, request, mapToResponse(updated))
@@ -107,5 +106,21 @@ func mapToResponse(question Question) response {
 		Choices: utils.Map(question.Options, func(opt Option) answerResponse {
 			return answerResponse{opt.Id, opt.Option}
 		}),
+	}
+}
+
+func apiSecured() routing.Filter {
+
+	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		apiToken := r.Header.Get("x-api-key")
+		apiKey := utils.GetEnvOrDefault("API_KEY", "")
+		if apiKey == "" {
+			utils.NewStdLogger("apiSecurity").Warn("Unable to find apiKey, operation denied")
+		}
+		if apiKey == "" || apiToken != base64.StdEncoding.EncodeToString([]byte(apiKey)) {
+			utils.StatusUnauthorized(w, r)
+		} else {
+			next(w, r)
+		}
 	}
 }

@@ -4,9 +4,7 @@ services:
     build:
       context: .
       dockerfile: ceh-trainer.dockerfile
-#    environment:
-#      - LISTEN_ADDRESS=:8080
-#    volumes:
-#      - ./data:/data
+    environment:
+      - API_KEY=geheim
     ports:
       - 8080:8080

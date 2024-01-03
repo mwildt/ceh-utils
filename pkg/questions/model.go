@@ -34,14 +34,17 @@ func (question Question) Update(text string, options []Option, answerId uuid.UUI
 		return updated, fmt.Errorf("options must not be empty")
 	}
 
-	if utils.AnyMatch(options, func(o Option) bool {
-		return o.Id == answerId
-	}) {
-		return updated, fmt.Errorf("answer must exist in options")
+	var empty uuid.UUID
+	if answerId != empty {
+		if !utils.AnyMatch(options, func(o Option) bool {
+			return o.Id == answerId
+		}) {
+			return updated, fmt.Errorf("answer must exist in options")
+		}
+		question.AnswerId = answerId
 	}
 	question.Options = options
 	question.Question = text
-	question.AnswerId = answerId
 	return question, err
 
 }
