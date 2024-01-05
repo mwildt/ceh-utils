@@ -20,8 +20,8 @@ func NewRestController(repo *FileLogRepository) *Controller {
 }
 
 func (controller *Controller) Routing(router routing.Routing) {
-
-	router.Handle(routing.Get("/api/media/**"), http.StripPrefix("/api/media", http.FileServer(http.Dir("./data/media"))))
+	mediaPath := utils.GetEnvOrDefault("CEH-12-QUESTIONS-DIR", "ceh-12-cehtest.org/") + "media"
+	router.Handle(routing.Get("/api/media/**"), http.StripPrefix("/api/media", http.FileServer(http.Dir(mediaPath))))
 
 	router.HandleFunc(routing.Get("/api/questions/"), controller.GetAll)
 	router.HandleFunc(routing.Get("/api/questions/{questionId}"), controller.GetById)

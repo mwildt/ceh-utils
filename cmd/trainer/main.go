@@ -9,17 +9,22 @@ import (
 	"github.com/mwildt/go-http/routing"
 	"log"
 	"net/http"
+	"path"
 )
 
 func main() {
 
-	questionRepo, err := questions.CreateRepo(utils.GetEnvOrDefault("QUESTION_STORAGE_DIR", "data/question.data"))
+	dataPath := utils.GetEnvOrDefault("DATA_DIR", "data/")
+
+	questionRepo, err := questions.CreateRepo(
+		path.Join(dataPath, "question.data"),
+		path.Join(utils.GetEnvOrDefault("CEH-12-QUESTIONS-DIR", "ceh-12-cehtest.org/"), "question.data"))
+
 	if err != nil {
 		log.Fatal(err)
 	}
 	questionsController := questions.NewRestController(questionRepo)
-
-	trainingRepo, err := training.CreateRepository()
+	trainingRepo, err := training.CreateFileRepository(path.Join(dataPath, "trainings.data"))
 	if err != nil {
 		log.Fatal(err)
 	}

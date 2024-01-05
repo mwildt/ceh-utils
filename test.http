@@ -21,7 +21,7 @@ POST localhost:8080/api/trainings/
 GET localhost:8080/api/trainings/
 
 ###
-GET localhost:8080/api/trainings/4a385476-794a-467c-85b9-d93acab86ffd
+GET localhost:8080/api/trainings/f581645c-3271-4a48-a3f6-b9516c74ecf6
 
 ###
 GET localhost:8080/api/questions/d7d5ab0b-0099-4769-82f8-1b246533360c
@@ -44,8 +44,8 @@ GET localhost:8080/api/questions/66931fec-ce45-474d-8df3-849a41bb07a0
 
 
 ###
-PATCH localhost:8080/api/questions/66931fec-ce45-474d-8df3-849a41bb07a0
-x-api-token: R0VIRUlN
+PATCH localhost:8080/api/questions/581f608e-c21b-4ebb-84e2-7ba66f51babc
+x-api-key: Z2VoZWlt
 Content-Type: application/json
 
 {
