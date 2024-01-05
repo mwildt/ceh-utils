@@ -1,5 +1,8 @@
 name: Docker Image CI
 
+env:
+  version: $(date +%s)
+
 on:
   push:
     branches: [ "master" ]
@@ -15,4 +18,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file ceh-trainer.dockerfile --tag egistry.ohrenpirat.de:5000/mwildt/ceh-trainer-api:$(date +%s)
+      run: docker build . --file ceh-trainer.dockerfile --tag registry.ohrenpirat.de:5000/mwildt/ceh-trainer-api:latest      
+    - name: Login Registry
+      run: docker login -u github-build -p {{DOCKER_REPO_KEY}} registry.ohrenpirat.de:5000
+    - name: Docker Push
+      run: docker push registry.ohrenpirat.de:5000/mwildt/ceh-trainer-api:latest
