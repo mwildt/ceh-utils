@@ -3,6 +3,7 @@ package training
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/mwildt/ceh-utils/pkg/events"
 	"github.com/mwildt/ceh-utils/pkg/utils"
 	"sort"
 	"time"
@@ -207,4 +208,11 @@ func (training *Training) init(events ...event) *Training {
 	training.logger = utils.NewStdLogger(fmt.Sprintf("training-%s", training.Id.String()))
 	training.events = append([]event{}, events...)
 	return training
+}
+
+func (training *Training) EmitEvents() {
+	for _, event := range training.events {
+		_ = events.Emit(event.Type, event.event)
+	}
+	training.events = training.events[:0]
 }

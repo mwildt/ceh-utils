@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/mwildt/ceh-utils/pkg/events"
 	"github.com/mwildt/ceh-utils/pkg/utils"
 	"os"
 	"sync"
@@ -141,6 +140,7 @@ func (repo *fileRepository) Save(ctx context.Context, training *Training) (_ *Tr
 		return training, err
 	}
 	repo.values[training.Id] = training
+	training.EmitEvents()
 	repo.writtenOperations = repo.writtenOperations + 1
 	return training, err
 }
@@ -196,9 +196,6 @@ func (repo inMemoryRepository) FindAllBy(_ context.Context, predicate utils.Pred
 
 func (repo inMemoryRepository) Save(_ context.Context, training *Training) (*Training, error) {
 	repo.values[training.Id] = training
-	for _, event := range training.events {
-		_ = events.Emit(event.Type, event.event)
-	}
-	training.events = training.events[:0]
+	training.EmitEvents()
 	return training, nil
 }
