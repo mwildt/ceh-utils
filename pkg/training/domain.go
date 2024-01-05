@@ -171,9 +171,6 @@ func (training *Training) getExcludeIds() []uuid.UUID {
 }
 
 func (training *Training) findRetryCandidate() (candidate *TrainingChallenge, found bool) {
-	for _, c := range training.Challenges {
-		training.logger.Info("challenge %s level: %d: timestamp: %s", c.Id, c.Level, c.Timestamp)
-	}
 	return filterCandidates(training.Challenges)
 }
 

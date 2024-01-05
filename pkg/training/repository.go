@@ -7,6 +7,7 @@ import (
 	"github.com/mwildt/ceh-utils/pkg/events"
 	"github.com/mwildt/ceh-utils/pkg/utils"
 	"os"
+	"sync"
 )
 
 type Repository interface {
@@ -22,21 +23,26 @@ func IdEquals(value uuid.UUID) utils.Predicate[*Training] {
 }
 
 type fileRepository struct {
-	values  map[uuid.UUID]*Training
-	path    string
-	logger  utils.Logger
-	file    *os.File
-	decoder utils.Decoder[Training]
-	encoder utils.Encoder[Training]
+	values            map[uuid.UUID]*Training
+	path              string
+	logger            utils.Logger
+	file              *os.File
+	decoder           utils.Decoder[Training]
+	encoder           utils.Encoder[Training]
+	mutex             *sync.Mutex
+	syncFactor        int
+	writtenOperations int
 }
 
 func CreateFileRepository(path string) (Repository, error) {
 	repo := &fileRepository{
-		values:  make(map[uuid.UUID]*Training),
-		path:    path,
-		logger:  utils.NewStdLogger("trainings.repository"),
-		encoder: utils.B64JsonEncoder[Training],
-		decoder: utils.B64JsonDecoder[Training],
+		values:     make(map[uuid.UUID]*Training),
+		path:       path,
+		logger:     utils.NewStdLogger("trainings.repository"),
+		encoder:    utils.B64JsonEncoder[Training],
+		decoder:    utils.B64JsonDecoder[Training],
+		mutex:      &sync.Mutex{},
+		syncFactor: 100,
 	}
 
 	if err := utils.CreateFileIfNotExists(repo.filepath()); err != nil {
@@ -59,6 +65,8 @@ func (repo *fileRepository) open() (err error) {
 	if !utils.FileExist(repo.filepath()) {
 		return fmt.Errorf("could not open log segment. File %s not found", repo.filepath())
 	}
+
+	repo.logger.Info("open file %s for writing", repo.filepath())
 	repo.file, err = os.OpenFile(repo.filepath(), os.O_APPEND|os.O_WRONLY, 0644)
 	return err
 }
@@ -67,6 +75,7 @@ func (repo *fileRepository) load() (err error) {
 	repo.logger.Info("start load items from file-system (%s)", repo.filepath())
 
 	count, err := utils.LoadFromFile(repo.filepath(), func(buffer []byte) error {
+		repo.writtenOperations = repo.writtenOperations + 1
 		value, err := repo.decoder(buffer)
 		if err != nil {
 			return err
@@ -81,12 +90,58 @@ func (repo *fileRepository) load() (err error) {
 	return err
 }
 
+func (repo *fileRepository) checkForSync() (err error) {
+	if len(repo.values)+repo.syncFactor <= repo.writtenOperations { // nach 100 operationen wird die Datei neu geschrieben...
+		return repo.sync()
+	}
+	return nil
+}
+
+func (repo *fileRepository) sync() (err error) {
+	repo.logger.Info("start sync operation")
+
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
+	intermediateFilePath := repo.filepath() + ".ifd"
+	intermediateFile, err := os.OpenFile(intermediateFilePath, os.O_CREATE|os.O_WRONLY, 0644) // intermediate flush data
+	for _, training := range repo.values {
+		if err = utils.Append(intermediateFile, *training, repo.encoder); err != nil {
+			return err
+		}
+	}
+	repo.logger.Info("%d objects written to %s", len(repo.values), intermediateFile.Name())
+	// nach dem schreiben die Files tauschen...
+	if err = intermediateFile.Close(); err != nil {
+		return err
+	} else if err = repo.file.Close(); err != nil {
+		return err
+	} else if err = os.Remove(repo.filepath()); err != nil {
+		return err
+	} else if err = os.Rename(intermediateFilePath, repo.filepath()); err != nil {
+		return err
+	} else {
+		repo.writtenOperations = len(repo.values)
+		return repo.open()
+	}
+}
+
 func (repo *fileRepository) Save(ctx context.Context, training *Training) (_ *Training, err error) {
+	repo.mutex.Lock()
+	defer func() {
+		repo.mutex.Unlock()
+		go func() {
+			if err = repo.checkForSync(); err != nil {
+				repo.logger.Error("sync error: %s", err.Error())
+			}
+		}()
+	}()
 	err = utils.Append(repo.file, *training, repo.encoder)
 	if err != nil {
 		return training, err
 	}
 	repo.values[training.Id] = training
+	repo.writtenOperations = repo.writtenOperations + 1
 	return training, err
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/mwildt/ceh-utils/pkg/utils"
 	"math/rand"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type FileLogRepository struct {
 	values map[uuid.UUID]Question
 	rand   *rand.Rand
 	logger utils.Logger
+	mutex  *sync.Mutex
 }
 
 func CreateRepo(path string, preloadFiles ...string) (repo *FileLogRepository, err error) {
@@ -23,6 +25,7 @@ func CreateRepo(path string, preloadFiles ...string) (repo *FileLogRepository, e
 		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
 		logger: utils.NewStdLogger("questions.repository"),
 		values: make(map[uuid.UUID]Question),
+		mutex:  &sync.Mutex{},
 	}
 	if err := utils.CreateFileIfNotExists(repo.filepath()); err != nil {
 		return repo, err
@@ -53,6 +56,8 @@ func (repo *FileLogRepository) FindRandom(predicate utils.Predicate[Question]) (
 }
 
 func (repo *FileLogRepository) Save(question Question) (_ Question, err error) {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
 	err = utils.Append(repo.file, question, repo.encodeRecord)
 	if err != nil {
 		return question, err
