@@ -8,17 +8,23 @@ import (
 
 func main() {
 
-	repo, err := questions.CreateRepo("question.data")
+	repo, err := questions.CreateRepo("data/question.data")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	loader := Loader{BaseUrl: "https://cehtest.org/"}
 
-	// load from cehtest.org
-	cntNew, cntOld, cntFailed, err := loader.LoadAll(
-		NewSessionRequestDTO{QuestionCount: 125, Versions: []int{12}},
-		repo)
+	cntNew := 1
+	cntOld := 0
+	cntFailed := 0
+
+	for cntNew > 0 {
+		// load from cehtest.org
+		cntNew, cntOld, cntFailed, err = loader.LoadAll(
+			NewSessionRequestDTO{QuestionCount: 125, Versions: []int{12}},
+			repo)
+	}
 
 	//cntNew, cntOld, cntFailed, err := loader.LoadFile(repo, "custom.json")
 

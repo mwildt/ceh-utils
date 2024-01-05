@@ -17,6 +17,7 @@ type Question struct {
 	Options  []Option
 	AnswerId uuid.UUID
 	Tags     []string
+	Media    []string
 }
 
 func (question Question) Update(text string, options []Option, answerId uuid.UUID) (updated Question, err error) {

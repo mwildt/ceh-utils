@@ -1,3 +1,19 @@
+GET http://cehtest.org/start_test
+Accept: */*
+Content-Type: application/json
+
+
+###
+GET http://cehtest.org/next_question
+Accept: */*
+Content-Type: application/json
+
+###
+GET http://localhost:8080/api/media/t2_02.jpg
+
+###
+GET localhost:8080/api/questions/
+
 ###
 POST localhost:8080/api/trainings/
 

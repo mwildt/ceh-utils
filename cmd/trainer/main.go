@@ -13,7 +13,7 @@ import (
 
 func main() {
 
-	questionRepo, err := questions.CreateRepo(utils.GetEnvOrDefault("QUESTION_STORAGE_DIR", "./question.data"))
+	questionRepo, err := questions.CreateRepo(utils.GetEnvOrDefault("QUESTION_STORAGE_DIR", "data/question.data"))
 	if err != nil {
 		log.Fatal(err)
 	}

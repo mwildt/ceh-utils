@@ -10,7 +10,7 @@ RUN ls -la
 FROM scratch
 
 COPY --from=build /src/cehTrainer /app/cehTrainer
-COPY --from=build /src/question.data /app/question.data
+COPY --from=build /src/data /app/data
 WORKDIR /app
 
 ENTRYPOINT ["/app/cehTrainer"]

@@ -12,6 +12,7 @@ import (
 	"net/http/cookiejar"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type NextQuestionResponseDTO struct {
@@ -43,6 +44,7 @@ type NewSessionRequestDTO struct {
 
 type Question struct {
 	Question    string      `json:"question"`
+	Media       string      `json:"media"`
 	A           optionValue `json:"A"`
 	B           optionValue `json:"B"`
 	C           optionValue `json:"C"`
@@ -80,9 +82,28 @@ func (loader *Loader) LoadAll(dto NewSessionRequestDTO, repo *questions.FileLogR
 			log.Printf("Fehler: %s", err)
 			cntFailed = cntFailed + 1
 		} else {
+
+			fmt.Println(apiQuestion.Question)
+			if strings.HasPrefix(apiQuestion.Question, "Peter extracts the SIDs") {
+				fmt.Println("Stop")
+			}
+
+			if apiQuestion.Media != "" {
+				fmt.Println(apiQuestion.Media)
+			}
+
 			question := mapToModel(apiQuestion)
 			if !repo.Contains(questions.ByQuestionText(question)) {
-				err = repo.Save(question)
+
+				if len(question.Media) > 0 {
+					for _, media := range question.Media {
+						if err = Download(loader.BaseUrl+"/media/"+media, "data/media/"+media); err != nil {
+							log.Fatal(err.Error())
+						}
+					}
+				}
+
+				_, err = repo.Save(question)
 				cntNew = cntNew + 1
 				if err != nil {
 					log.Printf("Fehler: %s", err)
@@ -143,6 +164,34 @@ func (loader *Loader) nextQuestion(client *http.Client) (question Question, err 
 	return apiResponse.Question, err
 }
 
+func Download(url, outputFilePath string) error {
+	response, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	// Check if the request was successful (status code 200)
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download file, status code: %d", response.StatusCode)
+	}
+
+	// Create the output file
+	outputFile, err := os.Create(outputFilePath)
+	if err != nil {
+		return err
+	}
+	defer outputFile.Close()
+
+	// Copy the response body to the output file
+	_, err = io.Copy(outputFile, response.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (loader *Loader) LoadFile(repo *questions.FileLogRepository, filePath string) (cntNew int, cntOld int, cntFailed int, err error) {
 	fileContent, err := os.ReadFile(filePath)
 	if err != nil {
@@ -157,7 +206,7 @@ func (loader *Loader) LoadFile(repo *questions.FileLogRepository, filePath strin
 
 	question := mapToModel(apiQuestion.Question)
 	if !repo.Contains(questions.ByQuestionText(question)) {
-		err = repo.Save(question)
+		_, err = repo.Save(question)
 		if err != nil {
 			return cntNew, cntOld, 1, err
 		} else {
@@ -227,11 +276,18 @@ func mapToModel(question Question, tags ...string) questions.Question {
 		}
 	}
 
+	media := make([]string, 0)
+
+	if len(question.Media) > 0 {
+		media = strings.Split(question.Media, ",")
+	}
+
 	return questions.Question{
 		Id:       uuid.New(),
 		Question: question.Question,
 		Tags:     tags,
 		AnswerId: answerId,
 		Options:  options,
+		Media:    media,
 	}
 }

@@ -20,9 +20,13 @@ func NewRestController(repo *FileLogRepository) *Controller {
 }
 
 func (controller *Controller) Routing(router routing.Routing) {
+
+	router.Handle(routing.Get("/api/media/**"), http.StripPrefix("/api/media", http.FileServer(http.Dir("./data/media"))))
+
 	router.HandleFunc(routing.Get("/api/questions/"), controller.GetAll)
 	router.HandleFunc(routing.Get("/api/questions/{questionId}"), controller.GetById)
 	router.HandleFunc(routing.Patch("/api/questions/{questionId}").Filter(apiSecured()), controller.PatchById)
+
 }
 
 func (controller *Controller) GetById(writer http.ResponseWriter, request *http.Request) {
@@ -97,6 +101,7 @@ type response struct {
 	Id      uuid.UUID        `json:"id"`
 	Text    string           `json:"text"`
 	Choices []answerResponse `json:"choices"`
+	Media   []string         `json:"media"`
 }
 
 func mapToResponse(question Question) response {
@@ -106,6 +111,7 @@ func mapToResponse(question Question) response {
 		Choices: utils.Map(question.Options, func(opt Option) answerResponse {
 			return answerResponse{opt.Id, opt.Option}
 		}),
+		Media: question.Media,
 	}
 }
 
