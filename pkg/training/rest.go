@@ -58,10 +58,10 @@ func mapGetTrainingDTO(t *Training) getTrainigDTO {
 		Updated:                t.Updated.Format(time.RFC3339),
 		Created:                t.Created.Format(time.RFC3339),
 		Stats: statsDTO{
-			t.stats.totalChallenges,
-			t.stats.passedChallenges,
-			t.stats.failedChallenges,
-			t.stats.currentChallengeAttempts,
+			t.Stats.totalChallenges,
+			t.Stats.passedChallenges,
+			t.Stats.failedChallenges,
+			t.Stats.currentChallengeAttempts,
 		},
 	}
 }

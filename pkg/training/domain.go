@@ -62,6 +62,10 @@ type event struct {
 	event interface{}
 }
 
+func createdEvent(id uuid.UUID) event {
+	return event{"training.created", CreatedEvent{id}}
+}
+
 type Stats struct {
 	totalChallenges          int
 	passedChallenges         int
@@ -91,8 +95,8 @@ type Training struct {
 	Updated                time.Time
 	Created                time.Time
 	events                 []event
-	stats                  *Stats
-	challenges             []*TrainingChallenge
+	Stats                  *Stats
+	Challenges             []*TrainingChallenge
 	logger                 utils.Logger
 }
 
@@ -104,21 +108,20 @@ func CreateTraining(nextChallenge ChallengeProvider) (training *Training, err er
 		return training, err
 	}
 	id := uuid.New()
-	return &Training{
+	return (&Training{
 		Id:                     id,
 		CurrentChallenge:       createTrainingChallenge(challenge),
 		currentChallengeFailed: false,
 		Updated:                time.Now(),
 		Created:                time.Now(),
-		events:                 []event{{"training.created", CreatedEvent{id}}},
-		stats: &Stats{
+		Challenges:             make([]*TrainingChallenge, 0),
+		Stats: &Stats{
 			totalChallenges:          1,
 			passedChallenges:         0,
 			failedChallenges:         0,
 			currentChallengeAttempts: 0,
 		},
-		logger: utils.NewStdLogger(fmt.Sprintf("training-%s", id.String())),
-	}, nil
+	}).init(createdEvent(id)), nil
 }
 
 func (training *Training) Next(answerId uuid.UUID, nextChallenge ChallengeProvider) (success bool, err error) {
@@ -133,7 +136,7 @@ func (training *Training) Next(answerId uuid.UUID, nextChallenge ChallengeProvid
 	}})
 
 	if success {
-		training.stats.pass()
+		training.Stats.pass()
 
 		if training.currentChallengeFailed {
 			training.CurrentChallenge.reset()
@@ -151,27 +154,27 @@ func (training *Training) Next(answerId uuid.UUID, nextChallenge ChallengeProvid
 				return success, err
 			}
 			trainingChallenge := createTrainingChallenge(challenge)
-			training.challenges = append(training.challenges, trainingChallenge)
+			training.Challenges = append(training.Challenges, trainingChallenge)
 			training.setCurrentChallenge(trainingChallenge)
 		}
 		training.Updated = time.Now()
 		return success, err
 	} else {
 		training.currentChallengeFailed = true
-		training.stats.fail()
+		training.Stats.fail()
 		return success, nil
 	}
 }
 
 func (training *Training) getExcludeIds() []uuid.UUID {
-	return utils.Map(training.challenges, getChallengeId)
+	return utils.Map(training.Challenges, getChallengeId)
 }
 
 func (training *Training) findRetryCandidate() (candidate *TrainingChallenge, found bool) {
-	for _, c := range training.challenges {
+	for _, c := range training.Challenges {
 		training.logger.Info("challenge %s level: %d: timestamp: %s", c.Id, c.Level, c.Timestamp)
 	}
-	return filterCandidates(training.challenges)
+	return filterCandidates(training.Challenges)
 }
 
 func filterCandidates(trainingChallenges []*TrainingChallenge) (candidate *TrainingChallenge, found bool) {
@@ -201,4 +204,10 @@ func notPending(cutoff time.Time) utils.Predicate[*TrainingChallenge] {
 func (training *Training) setCurrentChallenge(candidate *TrainingChallenge) {
 	training.CurrentChallenge = candidate
 	training.currentChallengeFailed = false
+}
+
+func (training *Training) init(events ...event) *Training {
+	training.logger = utils.NewStdLogger(fmt.Sprintf("training-%s", training.Id.String()))
+	training.events = append([]event{}, events...)
+	return training
 }

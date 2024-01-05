@@ -71,6 +71,7 @@ func (repo *fileRepository) load() (err error) {
 		if err != nil {
 			return err
 		}
+		value.init()
 		repo.values[value.Id] = &value
 		return nil
 	})
