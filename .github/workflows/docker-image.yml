@@ -20,6 +20,6 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file ceh-trainer.dockerfile --tag registry.ohrenpirat.de:5000/mwildt/ceh-trainer-api:latest      
     - name: Login Registry
-      run: docker login -u github-build -p {{DOCKER_REPO_KEY}} registry.ohrenpirat.de:5000
+      run: echo {{DOCKER_REPO_KEY}} | docker login -u github-build --password-stdin registry.ohrenpirat.de:5000
     - name: Docker Push
       run: docker push registry.ohrenpirat.de:5000/mwildt/ceh-trainer-api:latest
