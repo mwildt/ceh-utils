@@ -74,7 +74,7 @@ func (controller *Controller) PatchById(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var requestDTO struct {
-		Answer uuid.UUID `json:"answer"`
+		Answer []uuid.UUID `json:"answer"`
 	}
 
 	if trainingId, exists := routing.GetParameter(r.Context(), "trainingId"); !exists {

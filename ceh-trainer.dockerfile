@@ -12,7 +12,7 @@ RUN mkdir -p .empty/dir
 FROM scratch
 
 COPY --from=build /src/cehTrainer /app/cehTrainer
-COPY --from=build /src/ceh-12-cehtest.org /app/ceh-12-cehtest.org
+COPY --from=build /src/config /app/config
 COPY --from=build /src/.empty/dir /app/data
 WORKDIR /app
 

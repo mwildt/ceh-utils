@@ -13,23 +13,23 @@ type Option struct {
 }
 
 type Question struct {
-	Id       uuid.UUID
-	Question string
-	Options  []Option
-	AnswerId uuid.UUID
-	Tags     []string
-	Media    []string
-	events   []event
+	Id        uuid.UUID
+	Question  string
+	Options   []Option
+	AnswerIds []uuid.UUID
+	Tags      []string
+	Media     []string
+	events    []event
 }
 
-func CreateQuestion(question string, options []Option, answerId uuid.UUID, media []string, tags []string) *Question {
+func CreateQuestion(question string, options []Option, answerIds []uuid.UUID, media []string, tags []string) *Question {
 	return (&Question{
-		Id:       uuid.New(),
-		Question: question,
-		Options:  options,
-		AnswerId: answerId,
-		Media:    media,
-		Tags:     tags,
+		Id:        uuid.New(),
+		Question:  question,
+		Options:   options,
+		AnswerIds: answerIds,
+		Media:     media,
+		Tags:      tags,
 	}).init()
 }
 
@@ -38,7 +38,7 @@ func (q *Question) init(events ...event) *Question {
 	return q
 }
 
-func (q *Question) Update(text string, options []Option, answerId uuid.UUID) (updated *Question, err error) {
+func (q *Question) Update(text string, options []Option, answer []uuid.UUID) (updated *Question, err error) {
 	if len(text) == 0 {
 		return updated, fmt.Errorf("text must not be empty")
 	}
@@ -53,14 +53,14 @@ func (q *Question) Update(text string, options []Option, answerId uuid.UUID) (up
 		return updated, fmt.Errorf("options must not be empty")
 	}
 
-	var empty uuid.UUID
-	if answerId != empty {
-		if !utils.AnyMatch(options, func(o Option) bool {
-			return o.Id == answerId
-		}) {
-			return updated, fmt.Errorf("answer must exist in options")
+	if len(answer) > 0 {
+		optionAnswerIds := utils.Map(options, func(opt Option) uuid.UUID {
+			return opt.Id
+		})
+		if !utils.ContainsAll(optionAnswerIds, answer) {
+			return updated, fmt.Errorf("answers must all exist in options")
 		}
-		q.AnswerId = answerId
+		q.AnswerIds = answer
 		q.events = append(q.events, updatedEvent(q))
 	}
 	q.Options = options

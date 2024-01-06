@@ -18,7 +18,8 @@ func main() {
 
 	questionRepo, err := questions.CreateRepo(
 		path.Join(dataPath, "question.data"),
-		path.Join(utils.GetEnvOrDefault("CEH-12-QUESTIONS-DIR", "ceh-12-cehtest.org/"), "question.data"))
+		path.Join("config/ceh-12-cehtest.org", "question.data"),
+		path.Join("config/custom-json", "question.data"))
 
 	if err != nil {
 		log.Fatal(err)
@@ -41,7 +42,7 @@ func main() {
 		q, err := questionRepo.FindRandom(questions.IdNotIn(excluedIds))
 		return training.Challenge{
 			Id:     q.Id,
-			Answer: q.AnswerId,
+			Answer: q.AnswerIds,
 		}, err
 	})
 

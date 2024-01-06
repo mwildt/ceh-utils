@@ -46,7 +46,7 @@ func (controller *Controller) GetHistoryItem(w http.ResponseWriter, r *http.Requ
 		ChallengeId    uuid.UUID   `json:"challengeId"`
 		ChallengeIndex int         `json:"index"`
 		GivenAnswers   []uuid.UUID `json:"givenAnswers"`
-		SolvingAnswer  uuid.UUID   `json:"solvingAnswer"`
+		SolvingAnswer  []uuid.UUID `json:"solvingAnswer"`
 	}
 
 	if idString, exists := routing.GetParameter(r.Context(), "historyId"); !exists {

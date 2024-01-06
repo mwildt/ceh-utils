@@ -3,8 +3,8 @@ package questions
 import "github.com/google/uuid"
 
 type UpdatedEvent struct {
-	QuestionId uuid.UUID `json:"questionId"`
-	AnswerId   uuid.UUID `json:"answerId"`
+	QuestionId uuid.UUID   `json:"questionId"`
+	AnswerIds  []uuid.UUID `json:"answerIds"`
 }
 
 type event struct {
@@ -13,5 +13,5 @@ type event struct {
 }
 
 func updatedEvent(question *Question) event {
-	return event{"question.updated", UpdatedEvent{question.Id, question.AnswerId}}
+	return event{"question.updated", UpdatedEvent{question.Id, question.AnswerIds}}
 }

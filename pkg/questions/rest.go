@@ -20,7 +20,7 @@ func NewRestController(repo *FileLogRepository) *Controller {
 }
 
 func (controller *Controller) Routing(router routing.Routing) {
-	mediaPath := utils.GetEnvOrDefault("CEH-12-QUESTIONS-DIR", "ceh-12-cehtest.org/") + "media"
+	mediaPath := "config/ceh-12-cehtest.org/media"
 	router.Handle(routing.Get("/api/media/**"), http.StripPrefix("/api/media", http.FileServer(http.Dir(mediaPath))))
 
 	router.HandleFunc(routing.Get("/api/questions/"), controller.GetAll)
@@ -50,9 +50,9 @@ func (controller *Controller) GetAll(writer http.ResponseWriter, request *http.R
 
 func (controller *Controller) PatchById(writer http.ResponseWriter, request *http.Request) {
 	type patchByIdRequestDTO struct {
-		Text     string           `json:"text"`
-		Choices  []answerResponse `json:"choices"`
-		AnswerId uuid.UUID        `json:"answerId"`
+		Text    string           `json:"text"`
+		Choices []answerResponse `json:"choices"`
+		Answer  []uuid.UUID      `json:"answer"`
 	}
 
 	if questionId, err := readUuid("questionId", request); err != nil {
@@ -64,7 +64,7 @@ func (controller *Controller) PatchById(writer http.ResponseWriter, request *htt
 	} else {
 		updated, err := question.Update(requestDTO.Text, utils.Map(requestDTO.Choices, func(c answerResponse) Option {
 			return Option{Option: c.Text, Id: c.Id}
-		}), requestDTO.AnswerId)
+		}), requestDTO.Answer)
 
 		if err != nil {
 			utils.InternalServerError(writer, request)
@@ -77,7 +77,7 @@ func (controller *Controller) PatchById(writer http.ResponseWriter, request *htt
 }
 
 func readUuid(parameterName string, request *http.Request) (id uuid.UUID, err error) {
-	if strId, exists := routing.GetParameter(request.Context(), "questionId"); !exists {
+	if strId, exists := routing.GetParameter(request.Context(), parameterName); !exists {
 		return id, err
 	} else if id, err := uuid.Parse(strId); err != nil {
 		return id, err

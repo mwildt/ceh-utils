@@ -1,0 +1,14 @@
+[
+   {
+     "question": "MX record priority increases as the number increases.",
+      "options": [{
+        "text": "true",
+        "answer": false
+      },{
+        "text": "false",
+        "answer": true
+      }],
+      "media": [],
+      "tags": ["custom-json", "cehtest-12"]
+    }
+]

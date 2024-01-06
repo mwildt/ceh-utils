@@ -43,3 +43,28 @@ func True[T any]() Predicate[T] {
 		return true
 	}
 }
+
+func Contains[T comparable](collection []T, element T) bool {
+	for _, item := range collection {
+		if item == element {
+			return true
+		}
+	}
+	return false
+}
+
+func ContainsAll[T comparable](container []T, elements []T) bool {
+	if len(container) < len(elements) {
+		return false
+	}
+	for _, element := range elements {
+		if !Contains(container, element) {
+			return false
+		}
+	}
+	return true
+}
+
+func MutualContainment[T comparable](a []T, b []T) bool {
+	return ContainsAll(a, b) && ContainsAll(b, a)
+}

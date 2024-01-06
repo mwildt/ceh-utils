@@ -21,7 +21,7 @@ func Subscribe(repository Repository) (err error) {
 			return err
 		}
 		for _, training := range trainings {
-			training.updateChallengeAnswer(event.QuestionId, event.AnswerId)
+			training.updateChallengeAnswer(event.QuestionId, event.AnswerIds)
 			_, err = repository.Save(context.Background(), training)
 			return err
 		}
