@@ -13,7 +13,7 @@ type History struct {
 type Item struct {
 	ChallengeId   uuid.UUID
 	GivenAnswers  []uuid.UUID
-	SolvingAnswer uuid.UUID
+	SolvingAnswer []uuid.UUID
 }
 
 func CreateHistory(id uuid.UUID) History {
@@ -33,15 +33,15 @@ func (hist *History) HistoryItemAt(index int) (exists bool, item Item) {
 	}
 }
 
-func (hist *History) AddAnswer(answerId uuid.UUID) {
-	hist.currentAnswers = append(hist.currentAnswers, answerId)
+func (hist *History) AddAnswer(answerIds []uuid.UUID) {
+	hist.currentAnswers = append(hist.currentAnswers, answerIds...)
 }
 
 func (hist *History) Size() int {
 	return len(hist.history)
 }
 
-func (hist *History) Finalize(challengeId uuid.UUID, solvingAnswerId uuid.UUID) {
+func (hist *History) Finalize(challengeId uuid.UUID, solvingAnswerId []uuid.UUID) {
 	hist.history = append(hist.history, Item{
 		ChallengeId:   challengeId,
 		GivenAnswers:  hist.currentAnswers,

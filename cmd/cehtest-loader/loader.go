@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mwildt/ceh-utils/pkg/questions"
+	"github.com/mwildt/ceh-utils/pkg/utils"
 	"io"
 	"log"
 	"net/http"
@@ -83,21 +84,16 @@ func (loader *Loader) LoadAll(dto NewSessionRequestDTO, repo *questions.FileLogR
 			cntFailed = cntFailed + 1
 		} else {
 
-			fmt.Println(apiQuestion.Question)
-			if strings.HasPrefix(apiQuestion.Question, "Peter extracts the SIDs") {
-				fmt.Println("Stop")
-			}
+			fmt.Print("*")
 
-			if apiQuestion.Media != "" {
-				fmt.Println(apiQuestion.Media)
-			}
+			//fmt.Println(apiQuestion.Question)
 
-			question := mapToModel(apiQuestion)
+			question := mapToModel(apiQuestion, tags...)
 			if !repo.Contains(questions.ByQuestionText(question.Question)) {
 
 				if len(question.Media) > 0 {
 					for _, media := range question.Media {
-						if err = Download(loader.BaseUrl+"/media/"+media, "data/media/"+media); err != nil {
+						if err = Download(loader.BaseUrl+"/media/"+media, "ceh-12-cehtest.org/media/"+media); err != nil {
 							log.Fatal(err.Error())
 						}
 					}
@@ -106,7 +102,7 @@ func (loader *Loader) LoadAll(dto NewSessionRequestDTO, repo *questions.FileLogR
 				_, err = repo.Save(question)
 				cntNew = cntNew + 1
 				if err != nil {
-					log.Printf("Fehler: %s", err)
+					log.Printf("\nFehler: %s\n", err)
 					cntFailed = cntFailed + 1
 				}
 			} else {
@@ -129,13 +125,8 @@ func (loader *Loader) create(client *http.Client, dto NewSessionRequestDTO) (err
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	fmt.Println("Response Body:", string(body))
-	fmt.Println("Status Code:", resp.Status)
-	return nil
+	_, err = io.ReadAll(resp.Body)
+	return err
 }
 
 func (loader *Loader) nextQuestion(client *http.Client) (question Question, err error) {
@@ -148,7 +139,7 @@ func (loader *Loader) nextQuestion(client *http.Client) (question Question, err 
 	if err != nil {
 		return question, err
 	}
-	fmt.Println("Status Code:", resp.Status)
+	//fmt.Println("Status Code:", resp.Status)
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -217,66 +208,64 @@ func (loader *Loader) LoadFile(repo *questions.FileLogRepository, filePath strin
 }
 
 func mapToModel(question Question, tags ...string) *questions.Question {
-	var answerId uuid.UUID
+	var answerIds []uuid.UUID
 	options := make([]questions.Option, 0)
 
-	if len(question.Answer) > 1 {
-		fmt.Println("WARN: answer is %s\n", question.Answer)
-		panic(question)
-	}
+	answers := strings.Split(question.Answer, " ")
+
 	if question.A != "" {
 		id := uuid.New()
 		options = append(options, questions.Option{Id: id, Option: string(question.A)})
-		if question.Answer == "A" {
-			answerId = id
+		if utils.Contains(answers, "A") {
+			answerIds = append(answerIds, id)
 		}
 	}
 
 	if question.B != "" {
 		id := uuid.New()
 		options = append(options, questions.Option{Id: id, Option: string(question.B)})
-		if question.Answer == "B" {
-			answerId = id
+		if utils.Contains(answers, "B") {
+			answerIds = append(answerIds, id)
 		}
 	}
 
 	if question.C != "" {
 		id := uuid.New()
 		options = append(options, questions.Option{Id: id, Option: string(question.C)})
-		if question.Answer == "C" {
-			answerId = id
+		if utils.Contains(answers, "C") {
+			answerIds = append(answerIds, id)
 		}
 	}
 
 	if question.D != "" {
 		id := uuid.New()
 		options = append(options, questions.Option{Id: id, Option: string(question.D)})
-		if question.Answer == "D" {
-			answerId = id
+		if utils.Contains(answers, "D") {
+			answerIds = append(answerIds, id)
 		}
 	}
 
 	if question.E != "" {
 		id := uuid.New()
 		options = append(options, questions.Option{Id: id, Option: string(question.E)})
-		if question.Answer == "E" {
-			answerId = id
+		if utils.Contains(answers, "E") {
+			answerIds = append(answerIds, id)
 		}
 	}
 
 	if question.F != "" {
 		id := uuid.New()
 		options = append(options, questions.Option{Id: id, Option: string(question.F)})
-		if question.Answer == "F" {
-			answerId = id
+		if utils.Contains(answers, "F") {
+			answerIds = append(answerIds, id)
 		}
 	}
 
 	if question.G != "" {
 		id := uuid.New()
 		options = append(options, questions.Option{Id: id, Option: string(question.G)})
-		if question.Answer == "G" {
-			answerId = id
+		if utils.Contains(answers, "G") {
+			answerIds = append(answerIds, id)
 		}
 	}
 
@@ -289,7 +278,7 @@ func mapToModel(question Question, tags ...string) *questions.Question {
 	return questions.CreateQuestion(
 		question.Question,
 		options,
-		answerId,
+		answerIds,
 		media,
 		tags)
 

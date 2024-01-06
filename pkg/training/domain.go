@@ -11,12 +11,12 @@ import (
 
 type Challenge struct {
 	Id     uuid.UUID
-	Answer uuid.UUID
+	Answer []uuid.UUID
 }
 
 type TrainingChallenge struct {
 	Id        uuid.UUID
-	Answer    uuid.UUID
+	Answer    []uuid.UUID
 	Level     int
 	Timestamp time.Time
 	Done      bool
@@ -137,14 +137,14 @@ func CreateTraining(nextChallenge ChallengeProvider) (training *Training, err er
 	}).init(createdEvent(id)), nil
 }
 
-func (training *Training) Next(answerId uuid.UUID, nextChallenge ChallengeProvider) (success bool, err error) {
+func (training *Training) Next(answerIds []uuid.UUID, nextChallenge ChallengeProvider) (success bool, err error) {
 
-	success = training.CurrentChallenge.Answer == answerId
+	success = utils.MutualContainment(training.CurrentChallenge.Answer, answerIds)
 
 	training.events = append(training.events, event{"training.updated", UpdatedEvent{
 		TrainingId:  training.Id,
 		ChallengeId: training.CurrentChallenge.Id,
-		AnswerId:    answerId,
+		AnswerIds:   answerIds,
 		Passed:      success,
 	}})
 
@@ -205,7 +205,7 @@ func (training *Training) emitEvents() {
 	training.events = training.events[:0]
 }
 
-func (training *Training) updateChallengeAnswer(challengeId uuid.UUID, answerId uuid.UUID) {
+func (training *Training) updateChallengeAnswer(challengeId uuid.UUID, answerId []uuid.UUID) {
 	training.logger.Info("updateChallengeAnswer with id challenge Id %s to %s", challengeId, answerId)
 	if training.CurrentChallenge.Id == challengeId {
 		training.CurrentChallenge.Answer = answerId

@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	repo, err := questions.CreateRepo("data/question.data")
+	repo, err := questions.CreateRepo("ceh-12-cehtest.org/question.data")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,10 +20,15 @@ func main() {
 	cntFailed := 0
 
 	for cntNew > 0 {
+		fmt.Printf("start new round witdh 125 questions")
 		// load from cehtest.org
 		cntNew, cntOld, cntFailed, err = loader.LoadAll(
 			NewSessionRequestDTO{QuestionCount: 125, Versions: []int{12}},
-			repo)
+			repo,
+			"cehtest-12")
+
+		fmt.Printf("new %d, old %d, failed: %d, total: %d", cntNew, cntOld, cntFailed, repo.CountAll())
+
 	}
 
 	if err != nil {
