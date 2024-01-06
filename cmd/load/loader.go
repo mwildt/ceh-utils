@@ -93,7 +93,7 @@ func (loader *Loader) LoadAll(dto NewSessionRequestDTO, repo *questions.FileLogR
 			}
 
 			question := mapToModel(apiQuestion)
-			if !repo.Contains(questions.ByQuestionText(question)) {
+			if !repo.Contains(questions.ByQuestionText(question.Question)) {
 
 				if len(question.Media) > 0 {
 					for _, media := range question.Media {
@@ -205,7 +205,7 @@ func (loader *Loader) LoadFile(repo *questions.FileLogRepository, filePath strin
 	}
 
 	question := mapToModel(apiQuestion.Question)
-	if !repo.Contains(questions.ByQuestionText(question)) {
+	if !repo.Contains(questions.ByQuestionText(question.Question)) {
 		_, err = repo.Save(question)
 		if err != nil {
 			return cntNew, cntOld, 1, err
@@ -216,7 +216,7 @@ func (loader *Loader) LoadFile(repo *questions.FileLogRepository, filePath strin
 	return cntNew, 1, cntFailed, err
 }
 
-func mapToModel(question Question, tags ...string) questions.Question {
+func mapToModel(question Question, tags ...string) *questions.Question {
 	var answerId uuid.UUID
 	options := make([]questions.Option, 0)
 
@@ -282,12 +282,11 @@ func mapToModel(question Question, tags ...string) questions.Question {
 		media = strings.Split(question.Media, ",")
 	}
 
-	return questions.Question{
-		Id:       uuid.New(),
-		Question: question.Question,
-		Tags:     tags,
-		AnswerId: answerId,
-		Options:  options,
-		Media:    media,
-	}
+	return questions.CreateQuestion(
+		question.Question,
+		options,
+		answerId,
+		media,
+		tags)
+
 }

@@ -26,8 +26,6 @@ func main() {
 			repo)
 	}
 
-	//cntNew, cntOld, cntFailed, err := loader.LoadFile(repo, "custom.json")
-
 	if err != nil {
 		log.Fatal(err)
 	}

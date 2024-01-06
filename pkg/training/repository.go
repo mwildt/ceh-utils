@@ -140,7 +140,7 @@ func (repo *fileRepository) Save(ctx context.Context, training *Training) (_ *Tr
 		return training, err
 	}
 	repo.values[training.Id] = training
-	training.EmitEvents()
+	training.emitEvents()
 	repo.writtenOperations = repo.writtenOperations + 1
 	return training, err
 }
@@ -161,41 +161,4 @@ func (repo *fileRepository) FindFirst(ctx context.Context, predicate utils.Predi
 		}
 	}
 	return nil, false
-}
-
-// IN MEMORY
-// IN MEMORY
-// IN MEMORY
-// IN MEMORY
-// IN MEMORY
-// IN MEMORY
-// IN MEMORY
-
-func CreateInMemoryRepository() (Repository, error) {
-	return &inMemoryRepository{
-		make(map[uuid.UUID]*Training),
-	}, nil
-}
-
-type inMemoryRepository struct {
-	values map[uuid.UUID]*Training
-}
-
-func (repo inMemoryRepository) FindFirst(_ context.Context, predicate utils.Predicate[*Training]) (training *Training, exists bool) {
-	for _, training := range repo.values {
-		if predicate(training) {
-			return training, true
-		}
-	}
-	return training, false
-}
-
-func (repo inMemoryRepository) FindAllBy(_ context.Context, predicate utils.Predicate[*Training]) ([]*Training, error) {
-	return utils.FilterValues(repo.values, predicate), nil
-}
-
-func (repo inMemoryRepository) Save(_ context.Context, training *Training) (*Training, error) {
-	repo.values[training.Id] = training
-	training.EmitEvents()
-	return training, nil
 }

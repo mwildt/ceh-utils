@@ -22,6 +22,20 @@ type TrainingChallenge struct {
 	Done      bool
 }
 
+func TrainingChallengeIdEquals(id uuid.UUID) utils.Predicate[*TrainingChallenge] {
+	return func(q *TrainingChallenge) bool {
+		return q.Id == id
+	}
+}
+
+type ChallengeProvider func(excludeIds []uuid.UUID) (Challenge, error)
+
+func notPending(cutoff time.Time) utils.Predicate[*TrainingChallenge] {
+	return func(q *TrainingChallenge) bool {
+		return q.Timestamp.Before(cutoff) && !q.Done
+	}
+}
+
 func (tc *TrainingChallenge) reset() {
 	tc.Level = 0
 	tc.Timestamp = time.Now().Add(time.Minute * 10)
@@ -101,8 +115,6 @@ type Training struct {
 	logger                 utils.Logger
 }
 
-type ChallengeProvider func(excludeIds []uuid.UUID) (Challenge, error)
-
 func CreateTraining(nextChallenge ChallengeProvider) (training *Training, err error) {
 	challenge, err := nextChallenge(make([]uuid.UUID, 0))
 	if err != nil {
@@ -175,6 +187,44 @@ func (training *Training) findRetryCandidate() (candidate *TrainingChallenge, fo
 	return filterCandidates(training.Challenges)
 }
 
+func (training *Training) setCurrentChallenge(candidate *TrainingChallenge) {
+	training.CurrentChallenge = candidate
+	training.currentChallengeFailed = false
+}
+
+func (training *Training) init(events ...event) *Training {
+	training.logger = utils.NewStdLogger(fmt.Sprintf("training-%s", training.Id.String()))
+	training.events = append([]event{}, events...)
+	return training
+}
+
+func (training *Training) emitEvents() {
+	for _, event := range training.events {
+		_ = events.Emit(event.Type, event.event)
+	}
+	training.events = training.events[:0]
+}
+
+func (training *Training) updateChallengeAnswer(challengeId uuid.UUID, answerId uuid.UUID) {
+	training.logger.Info("updateChallengeAnswer with id challenge Id %s to %s", challengeId, answerId)
+	if training.CurrentChallenge.Id == challengeId {
+		training.CurrentChallenge.Answer = answerId
+	}
+	for _, tq := range training.Challenges {
+		if tq.Id == challengeId {
+			tq.Answer = answerId
+			tq.reset()
+		}
+		tq.reset()
+	}
+}
+
+func ContainsChallenge(challengeId uuid.UUID) utils.Predicate[*Training] {
+	return func(q *Training) bool {
+		return q.CurrentChallenge.Id == challengeId || utils.AnyMatch(q.Challenges, TrainingChallengeIdEquals(challengeId))
+	}
+}
+
 func filterCandidates(trainingChallenges []*TrainingChallenge) (candidate *TrainingChallenge, found bool) {
 	// erstmal alle rausfilter, die die cutoff grente noch nicht erreich haben
 	candidates := utils.Filter(trainingChallenges, notPending(time.Now()))
@@ -191,28 +241,4 @@ func filterCandidates(trainingChallenges []*TrainingChallenge) (candidate *Train
 		return candidates[0], true
 	}
 	return candidate, false
-}
-
-func notPending(cutoff time.Time) utils.Predicate[*TrainingChallenge] {
-	return func(q *TrainingChallenge) bool {
-		return q.Timestamp.Before(cutoff) && !q.Done
-	}
-}
-
-func (training *Training) setCurrentChallenge(candidate *TrainingChallenge) {
-	training.CurrentChallenge = candidate
-	training.currentChallengeFailed = false
-}
-
-func (training *Training) init(events ...event) *Training {
-	training.logger = utils.NewStdLogger(fmt.Sprintf("training-%s", training.Id.String()))
-	training.events = append([]event{}, events...)
-	return training
-}
-
-func (training *Training) EmitEvents() {
-	for _, event := range training.events {
-		_ = events.Emit(event.Type, event.event)
-	}
-	training.events = training.events[:0]
 }

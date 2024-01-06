@@ -45,6 +45,10 @@ func main() {
 		}, err
 	})
 
+	if err = training.Subscribe(trainingRepo); err != nil {
+		log.Fatal(err)
+	}
+
 	baseHandler := routing.NewRouter()
 
 	baseHandler.Route(

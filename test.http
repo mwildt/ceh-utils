@@ -51,6 +51,7 @@ Content-Type: application/json
 {
     "id": "66931fec-ce45-474d-8df3-849a41bb07a0",
     "text": "Which among the following is the best example of the hacking concept called \"covering tracks\"?",
+    "answerId": "091e8c1f-f308-4110-8909-03a63f47af90",
     "choices": [
       {
         "id": "091e8c1f-f308-4110-8909-03a63f47af90",

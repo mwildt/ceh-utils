@@ -104,7 +104,7 @@ type response struct {
 	Media   []string         `json:"media"`
 }
 
-func mapToResponse(question Question) response {
+func mapToResponse(question *Question) response {
 	return response{
 		Id:   question.Id,
 		Text: question.Question,

@@ -13,7 +13,7 @@ import (
 type FileLogRepository struct {
 	file   *os.File
 	path   string
-	values map[uuid.UUID]Question
+	values map[uuid.UUID]*Question
 	rand   *rand.Rand
 	logger utils.Logger
 	mutex  *sync.Mutex
@@ -24,7 +24,7 @@ func CreateRepo(path string, preloadFiles ...string) (repo *FileLogRepository, e
 		path:   path,
 		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
 		logger: utils.NewStdLogger("questions.repository"),
-		values: make(map[uuid.UUID]Question),
+		values: make(map[uuid.UUID]*Question),
 		mutex:  &sync.Mutex{},
 	}
 	if err := utils.CreateFileIfNotExists(repo.filepath()); err != nil {
@@ -46,7 +46,7 @@ func CreateRepo(path string, preloadFiles ...string) (repo *FileLogRepository, e
 	return repo, err
 }
 
-func (repo *FileLogRepository) FindRandom(predicate utils.Predicate[Question]) (question Question, err error) {
+func (repo *FileLogRepository) FindRandom(predicate utils.Predicate[*Question]) (question *Question, err error) {
 	candidates := utils.FilterValues(repo.values, predicate)
 	if len(candidates) == 0 {
 		return question, err
@@ -55,7 +55,7 @@ func (repo *FileLogRepository) FindRandom(predicate utils.Predicate[Question]) (
 	return candidates[randomIndex], nil
 }
 
-func (repo *FileLogRepository) Save(question Question) (_ Question, err error) {
+func (repo *FileLogRepository) Save(question *Question) (_ *Question, err error) {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 	err = utils.Append(repo.file, question, repo.encodeRecord)
@@ -63,35 +63,24 @@ func (repo *FileLogRepository) Save(question Question) (_ Question, err error) {
 		return question, err
 	}
 	repo.values[question.Id] = question
+	question.emitEvents()
 	return question, err
 }
 
 type QuestionPredicate func(q Question) bool
 
-func IdNotIn(uuids []uuid.UUID) utils.Predicate[Question] {
+func IdNotIn(uuids []uuid.UUID) utils.Predicate[*Question] {
 	keyMap := make(map[uuid.UUID]uuid.UUID)
 	for _, id := range uuids {
 		keyMap[id] = id
 	}
-	return func(q Question) bool {
+	return func(q *Question) bool {
 		_, exists := keyMap[q.Id]
 		return !exists
 	}
 }
 
-func IdEquals(value uuid.UUID) utils.Predicate[Question] {
-	return func(q Question) bool {
-		return value == q.Id
-	}
-}
-
-func True() utils.Predicate[Question] {
-	return func(q Question) bool {
-		return true
-	}
-}
-
-func (repo *FileLogRepository) FindAll(predicate utils.Predicate[Question]) (list []Question, err error) {
+func (repo *FileLogRepository) FindAll(predicate utils.Predicate[*Question]) (list []*Question, err error) {
 	for _, question := range repo.values {
 		if predicate(question) {
 			list = append(list, question)
@@ -100,7 +89,7 @@ func (repo *FileLogRepository) FindAll(predicate utils.Predicate[Question]) (lis
 	return list, err
 }
 
-func (repo *FileLogRepository) FindFirst(predicate utils.Predicate[Question]) (question Question, exists bool) {
+func (repo *FileLogRepository) FindFirst(predicate utils.Predicate[*Question]) (question *Question, exists bool) {
 	for _, question := range repo.values {
 		if predicate(question) {
 			return question, true
@@ -109,7 +98,7 @@ func (repo *FileLogRepository) FindFirst(predicate utils.Predicate[Question]) (q
 	return question, false
 }
 
-func (repo *FileLogRepository) Contains(predicate utils.Predicate[Question]) bool {
+func (repo *FileLogRepository) Contains(predicate utils.Predicate[*Question]) bool {
 	_, exists := repo.FindFirst(predicate)
 	return exists
 }
@@ -146,11 +135,11 @@ func (repo *FileLogRepository) filepath() string {
 	return repo.path
 }
 
-func (repo *FileLogRepository) decodeRecord(record []byte) (question Question, err error) {
-	return utils.B64JsonDecoder[Question](record)
+func (repo *FileLogRepository) decodeRecord(record []byte) (question *Question, err error) {
+	return utils.B64JsonDecoder[*Question](record)
 }
 
-func (repo *FileLogRepository) encodeRecord(value Question) (encoded []byte, err error) {
+func (repo *FileLogRepository) encodeRecord(value *Question) (encoded []byte, err error) {
 	return utils.B64JsonEncoder(value)
 }
 
