@@ -26,6 +26,7 @@ func (controller *Controller) Routing(router routing.Routing) {
 	router.HandleFunc(routing.Get("/api/trainings/"), controller.GetAll)
 	router.HandleFunc(routing.Patch("/api/trainings/{trainingId}"), controller.PatchById)
 	router.HandleFunc(routing.Get("/api/trainings/{trainingId}"), controller.GetById)
+	router.HandleFunc(routing.Get("/api/trainings/{trainingId}/challenges"), controller.GetChallengesById)
 }
 
 func (controller *Controller) Post(writer http.ResponseWriter, request *http.Request) {
@@ -102,6 +103,36 @@ func (controller *Controller) GetById(w http.ResponseWriter, r *http.Request) {
 		utils.NotFound(w, r)
 	} else {
 		utils.OkJson(w, r, mapGetTrainingDTO(training))
+	}
+}
+
+func (controller *Controller) GetChallengesById(w http.ResponseWriter, r *http.Request) {
+
+	type challengeDto struct {
+		Id    uuid.UUID `json:"id"`
+		Level int       `json:"level"`
+	}
+
+	mapChallengeDTO := func(c *TrainingChallenge) challengeDto {
+		return challengeDto{Id: c.Id, Level: c.Level}
+	}
+
+	type responseDTO struct {
+		Id         uuid.UUID      `json:"id"`
+		Challenges []challengeDto `json:"challenges"`
+	}
+
+	if trainingId, exists := routing.GetParameter(r.Context(), "trainingId"); !exists {
+		utils.BadRequest(w, r)
+	} else if trainingUuid, err := uuid.Parse(trainingId); err != nil {
+		utils.BadRequest(w, r)
+	} else if training, exists := controller.repo.FindFirst(r.Context(), IdEquals(trainingUuid)); !exists {
+		utils.NotFound(w, r)
+	} else {
+		utils.OkJson(w, r, responseDTO{
+			Id:         training.Id,
+			Challenges: utils.Map(training.Challenges, mapChallengeDTO),
+		})
 	}
 }
 

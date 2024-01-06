@@ -21,7 +21,10 @@ POST localhost:8080/api/trainings/
 GET localhost:8080/api/trainings/
 
 ###
-GET localhost:8080/api/trainings/f581645c-3271-4a48-a3f6-b9516c74ecf6
+GET localhost:8080/api/trainings/1219c451-0925-459b-b5ca-a494b0183937
+
+###
+GET localhost:8080/api/trainings/e1d2dee3-e957-4650-9ecc-b1abf34a7be2/challenges
 
 ###
 GET localhost:8080/api/questions/d7d5ab0b-0099-4769-82f8-1b246533360c

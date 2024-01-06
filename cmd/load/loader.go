@@ -220,6 +220,10 @@ func mapToModel(question Question, tags ...string) *questions.Question {
 	var answerId uuid.UUID
 	options := make([]questions.Option, 0)
 
+	if len(question.Answer) > 1 {
+		fmt.Println("WARN: answer is %s\n", question.Answer)
+		panic(question)
+	}
 	if question.A != "" {
 		id := uuid.New()
 		options = append(options, questions.Option{Id: id, Option: string(question.A)})
