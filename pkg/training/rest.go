@@ -119,10 +119,11 @@ func (controller *Controller) GetChallengesById(w http.ResponseWriter, r *http.R
 		Id    uuid.UUID `json:"id"`
 		Level int       `json:"level"`
 		Count int       `json:"count"`
+		Done  bool      `json:"done"`
 	}
 
 	mapChallengeDTO := func(c *TrainingChallenge) challengeDto {
-		return challengeDto{Id: c.Id, Level: c.Level, Count: c.Count}
+		return challengeDto{Id: c.Id, Level: c.Level, Count: c.Count, Done: c.Done}
 	}
 
 	type responseDTO struct {
