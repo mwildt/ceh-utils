@@ -27,6 +27,10 @@ func Filter[T any](collection []T, predicate Predicate[T]) (result []T) {
 	return result
 }
 
+func Count[T any](collection []T, predicate Predicate[T]) int {
+	return len(Filter(collection, predicate))
+}
+
 func AnyMatch[T any](collection []T, predicate Predicate[T]) bool {
 	for _, element := range collection {
 		if predicate(element) {

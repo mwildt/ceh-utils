@@ -56,8 +56,15 @@ func mapGetTrainingDTO(t *Training) getTrainigDTO {
 		Challenge:              t.CurrentChallenge.Id,
 		CurrentChallengeFailed: t.currentChallengeFailed,
 		CurrentLevel:           t.CurrentChallenge.Level,
+		CurrentCount:           t.CurrentChallenge.Count,
 		Updated:                t.Updated.Format(time.RFC3339),
 		Created:                t.Created.Format(time.RFC3339),
+		ChallengeStats: challengeStatsDTO{
+			len(t.Challenges),
+			t.GetChallengeCount(Initial()),
+			t.GetChallengeCount(Proceeding()),
+			t.GetChallengeCount(Done()),
+		},
 		Stats: statsDTO{
 			t.Stats.totalChallenges,
 			t.Stats.passedChallenges,
@@ -111,10 +118,11 @@ func (controller *Controller) GetChallengesById(w http.ResponseWriter, r *http.R
 	type challengeDto struct {
 		Id    uuid.UUID `json:"id"`
 		Level int       `json:"level"`
+		Count int       `json:"count"`
 	}
 
 	mapChallengeDTO := func(c *TrainingChallenge) challengeDto {
-		return challengeDto{Id: c.Id, Level: c.Level}
+		return challengeDto{Id: c.Id, Level: c.Level, Count: c.Count}
 	}
 
 	type responseDTO struct {
@@ -147,12 +155,21 @@ type statsDTO struct {
 	CurrentChallengeAttempts int `json:"currentAttempts"`
 }
 
+type challengeStatsDTO struct {
+	Total      int `json:"total"`
+	Initial    int `json:"initial"`
+	Proceeding int `json:"proceeding"`
+	Done       int `json:"done"`
+}
+
 type getTrainigDTO struct {
-	Id                     uuid.UUID `json:"id"`
-	Challenge              uuid.UUID `json:"challenge"`
-	CurrentChallengeFailed bool      `json:"currentChallengeFailed"`
-	CurrentLevel           int       `json:"currentLevel"`
-	Updated                string    `json:"updated"`
-	Created                string    `json:"created"`
-	Stats                  statsDTO  `json:"stats"`
+	Id                     uuid.UUID         `json:"id"`
+	Challenge              uuid.UUID         `json:"challenge"`
+	CurrentChallengeFailed bool              `json:"currentChallengeFailed"`
+	CurrentLevel           int               `json:"currentLevel"`
+	CurrentCount           int               `json:"currentCount"`
+	Updated                string            `json:"updated"`
+	Created                string            `json:"created"`
+	Stats                  statsDTO          `json:"stats"`
+	ChallengeStats         challengeStatsDTO `json:"challengeStats"`
 }

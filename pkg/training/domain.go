@@ -20,6 +20,7 @@ type TrainingChallenge struct {
 	Level     int
 	Timestamp time.Time
 	Done      bool
+	Count     int
 }
 
 func TrainingChallengeIdEquals(id uuid.UUID) utils.Predicate[*TrainingChallenge] {
@@ -30,6 +31,24 @@ func TrainingChallengeIdEquals(id uuid.UUID) utils.Predicate[*TrainingChallenge]
 
 type ChallengeProvider func(excludeIds []uuid.UUID) (Challenge, error)
 
+func Initial() utils.Predicate[*TrainingChallenge] {
+	return func(q *TrainingChallenge) bool {
+		return q.Level == 0 && !q.Done
+	}
+}
+
+func Proceeding() utils.Predicate[*TrainingChallenge] {
+	return func(q *TrainingChallenge) bool {
+		return q.Level > 0 && !q.Done
+	}
+}
+
+func Done() utils.Predicate[*TrainingChallenge] {
+	return func(q *TrainingChallenge) bool {
+		return q.Done
+	}
+}
+
 func notPending(cutoff time.Time) utils.Predicate[*TrainingChallenge] {
 	return func(q *TrainingChallenge) bool {
 		return q.Timestamp.Before(cutoff) && !q.Done
@@ -37,11 +56,14 @@ func notPending(cutoff time.Time) utils.Predicate[*TrainingChallenge] {
 }
 
 func (tc *TrainingChallenge) reset() {
+
+	tc.Count = tc.Count + 1
 	tc.Level = 0
 	tc.Timestamp = time.Now().Add(time.Minute * 10)
 }
 
 func (tc *TrainingChallenge) proceed() {
+	tc.Count = tc.Count + 1
 	tc.Level = tc.Level + 1
 	switch tc.Level {
 	case 1:
@@ -65,7 +87,7 @@ func (tc *TrainingChallenge) proceed() {
 }
 
 func createTrainingChallenge(challenge Challenge) *TrainingChallenge {
-	return &TrainingChallenge{challenge.Id, challenge.Answer, 0, time.Now(), false}
+	return &TrainingChallenge{challenge.Id, challenge.Answer, 0, time.Now(), false, 0}
 }
 
 func getChallengeId(c *TrainingChallenge) uuid.UUID {
@@ -152,8 +174,10 @@ func (training *Training) Next(answerIds []uuid.UUID, nextChallenge ChallengePro
 		training.Stats.pass()
 
 		if training.currentChallengeFailed {
+			training.logger.Info("reset Challenge {id: %s, level: %d}", training.CurrentChallenge.Id, training.CurrentChallenge.Level)
 			training.CurrentChallenge.reset()
 		} else {
+			training.logger.Info("proceed Challenge {id: %s, level: %d}", training.CurrentChallenge.Id, training.CurrentChallenge.Level)
 			training.CurrentChallenge.proceed()
 		}
 
@@ -217,6 +241,10 @@ func (training *Training) updateChallengeAnswer(challengeId uuid.UUID, answerId 
 		}
 		tq.reset()
 	}
+}
+
+func (training *Training) GetChallengeCount(predicate utils.Predicate[*TrainingChallenge]) int {
+	return utils.Count(training.Challenges, predicate)
 }
 
 func ContainsChallenge(challengeId uuid.UUID) utils.Predicate[*Training] {

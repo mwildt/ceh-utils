@@ -1,0 +1,79 @@
+Which of these is not an advantage of using automation in a cloud environment?
+	A. Consistency
+*	B. Fault tolerance
+	C. Repeatability
+	D. Testability
+Automation leads to consistency, because automation is performed by scripts that will always execute the same way every time. This also leads to repeatability. Because they are scripts, you can test them. What you don’t necessarily get is fault tolerance.
+
+
+What might you be most likely to use to develop a web application that used a mobile application for the user interface?
+	A. NoSQL database
+	B. Data bus
+	C. Microservices
+*	D. RESTful API
+While a NoSQL database, data bus, and microservice architecture could be used to develop a web application with a mobile application for a front end that interacts with the user, the most likely would be a RESTful API. This way, it doesn’t matter what is behind the API. The API is the interface between the web application and the mobile device.
+
+
+Which of these cloud offerings relies on the customer having the most responsibility?
+	A. Software as a service
+	B. Platform as a service
+	C. Storage as a service
+*	D. Infrastructure as a service
+Infrastructure as a service puts everything down to the operating system under the control of the customer. The other services put much more control into the hands of the service provider.
+
+
+Which of these is not a common element of cloud-native design?
+	A. Microservice architecture
+	B. Automation
+*	C. Virtual machines
+	D. Containers
+Cloud-native design takes advantage of lots of technologies that make for responsive applications. This will commonly include containers, which is application virtualization. A virtual machine is a lot slower to start up than a container is. Automation and microservice architecture are important components of cloud-native design.
+
+
+Why is REST a common approach to web application design?
+	A. HTML is stateless.
+*	B. HTTP is stateless.
+	C. HTML is stateful.
+	D. HTTP is stateful.
+HTTP is a stateless protocol, which requires the application to perform some sort of state transfer. REST is Representational State Transfer, which allows the client and server to communicate information about the state of the client and the application between them. HTML is not a protocol but a language, so state doesn’t make sense.
+
+
+What tool could you use to identify IoT devices on a network?
+	A. Cloudscan
+*	B. nmap
+	C. Samba
+	D. Postman
+
+Cloudscan is used to assess cloud services. Samba is a network sharing application based around the server message block protocol. Postman is an application used to test web application programming interfaces. nmap is a port scanner that could be used to identify any devices on a network as well as the ports open on that device.
+
+What common element of a general-purpose computing platform does an IoT not typically have?
+	A. Memory
+	B. Processor
+*	C. Input/output
+	D. Programs
+
+Computing devices generally follow the Von Neumann architecture: there is memory, storage, and a processor. A general-purpose computing device will have some sort of input/output to interface with a user. An IoT device will have a special-purpose input/output device that may not easily allow a user to interact with it in general ways. A smart thermostat, for example, has a simple display that would do things like show the temperature and allow you to adjust the desired temperature.
+
+
+If you wanted to share documents with someone using a cloud provider, which service would you be most likely to use?
+	A. Software as a service
+	B. Platform as a service
+*	C. Storage as a service
+	D. Infrastructure as a service
+Storage as a service is used to store documents. From there, you can share those documents. While you could also share documents from the other cloud-based services, storage as a service would be the most common.
+
+
+Which of these might be a concern with moving services to a cloud provider, away from on-premise services?
+	A. Multiple accounts per user
+	B. Lack of transport layer encryption
+*	C. Inability to implement security controls
+	D. Complicated application design
+Implementing security controls is essential, regardless of where the services are located. Businesses commonly know how to implement these controls in on-premise systems. They may not know the appropriate way of implementing these controls in a cloud environment. All of the other answers could be a problem in an on-premise environment and wouldn’t be specific to cloud.
+
+
+Which of these is not an example of an IoT device?
+*	A. Chromebook
+	B. iDevices light switch
+	C. Nest thermostat
+	D. Amazon Echo
+A Chromebook is a laptop with a traditional user interface, including a screen and a keyboard. The other devices don’t have a traditional user interface but are still connected to networks, allowing anyone who has access to those networks to interface with them.
