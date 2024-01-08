@@ -239,7 +239,6 @@ func (training *Training) updateChallengeAnswer(challengeId uuid.UUID, answerId 
 			tq.Answer = answerId
 			tq.reset()
 		}
-		tq.reset()
 	}
 }
 
