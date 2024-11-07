@@ -7,6 +7,17 @@ func Map[T any, R any](collection []T, mapper func(T) R) (result []R) {
 	return result
 }
 
+func MapError[T any, R any](collection []T, mapper func(T) (R, error)) (result []R, _ error) {
+	for _, element := range collection {
+		if mapped, err := mapper(element); err != nil {
+			return result, err
+		} else {
+			result = append(result, mapped)
+		}
+	}
+	return result, nil
+}
+
 func FilterValues[K comparable, T any](collection map[K]T, predicate Predicate[T]) (result []T) {
 	result = make([]T, 0)
 	for _, element := range collection {
