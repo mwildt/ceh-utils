@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mwildt/ceh-utils/pkg/events"
-	"github.com/mwildt/ceh-utils/pkg/utils"
+	"github.com/ohrenpiraten/go-collections/collections"
+	"github.com/ohrenpiraten/go-collections/predicates"
 )
 
 type Option struct {
@@ -47,17 +48,17 @@ func (q *Question) Update(text string, options []Option, answer []uuid.UUID) (up
 		return updated, fmt.Errorf("options must be min 2")
 	}
 
-	if utils.AnyMatch(options, func(o Option) bool {
+	if collections.AnyMatch(options, func(o Option) bool {
 		return len(o.Option) == 0
 	}) {
 		return updated, fmt.Errorf("options must not be empty")
 	}
 
 	if len(answer) > 0 {
-		optionAnswerIds := utils.Map(options, func(opt Option) uuid.UUID {
+		optionAnswerIds := collections.Map(options, func(opt Option) uuid.UUID {
 			return opt.Id
 		})
-		if !utils.ContainsAll(optionAnswerIds, answer) {
+		if !collections.ContainsAll(optionAnswerIds, answer) {
 			return updated, fmt.Errorf("answers must all exist in options")
 		}
 		q.AnswerIds = answer
@@ -75,20 +76,14 @@ func (q *Question) emitEvents() {
 	q.events = q.events[:0]
 }
 
-func ByQuestionText(text string) utils.Predicate[*Question] {
+func ByQuestionText(text string) predicates.Predicate[*Question] {
 	return func(comp *Question) bool {
 		return comp.Question == text
 	}
 }
 
-func IdEquals(value uuid.UUID) utils.Predicate[*Question] {
+func IdEquals(value uuid.UUID) predicates.Predicate[*Question] {
 	return func(q *Question) bool {
 		return value == q.Id
-	}
-}
-
-func True() utils.Predicate[*Question] {
-	return func(q *Question) bool {
-		return true
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/mwildt/ceh-utils/pkg/questions"
 	"github.com/mwildt/ceh-utils/pkg/training"
 	"github.com/mwildt/ceh-utils/pkg/utils"
+	"github.com/mwildt/go-http/httputils"
 	"github.com/mwildt/go-http/routing"
 	"log"
 	"net/http"
@@ -58,7 +59,7 @@ func main() {
 		trainingController.Routing,
 		history.NewRestController(historyRepo).Routing,
 		func(router routing.Routing) {
-			router.HandleFunc(routing.Path("/"), utils.NotFound)
+			router.HandleFunc(routing.Path("/"), httputils.NotFound)
 		},
 	)
 

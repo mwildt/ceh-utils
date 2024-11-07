@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mwildt/ceh-utils/pkg/utils"
+	"github.com/ohrenpiraten/go-collections/dictionaray"
+	"github.com/ohrenpiraten/go-collections/predicates"
 	"math/rand"
 	"os"
 	"sync"
@@ -46,8 +48,8 @@ func CreateRepo(path string, preloadFiles ...string) (repo *FileLogRepository, e
 	return repo, err
 }
 
-func (repo *FileLogRepository) FindRandom(predicate utils.Predicate[*Question]) (question *Question, err error) {
-	candidates := utils.FilterValues(repo.values, predicate)
+func (repo *FileLogRepository) FindRandom(predicate predicates.Predicate[*Question]) (question *Question, err error) {
+	candidates := dictionaray.FilterValues(repo.values, predicate)
 	if len(candidates) == 0 {
 		return question, err
 	}
@@ -69,7 +71,7 @@ func (repo *FileLogRepository) Save(question *Question) (_ *Question, err error)
 
 type QuestionPredicate func(q Question) bool
 
-func IdNotIn(uuids []uuid.UUID) utils.Predicate[*Question] {
+func IdNotIn(uuids []uuid.UUID) predicates.Predicate[*Question] {
 	keyMap := make(map[uuid.UUID]uuid.UUID)
 	for _, id := range uuids {
 		keyMap[id] = id
@@ -80,7 +82,7 @@ func IdNotIn(uuids []uuid.UUID) utils.Predicate[*Question] {
 	}
 }
 
-func (repo *FileLogRepository) FindAll(predicate utils.Predicate[*Question]) (list []*Question, err error) {
+func (repo *FileLogRepository) FindAll(predicate predicates.Predicate[*Question]) (list []*Question, err error) {
 	for _, question := range repo.values {
 		if predicate(question) {
 			list = append(list, question)
@@ -89,7 +91,7 @@ func (repo *FileLogRepository) FindAll(predicate utils.Predicate[*Question]) (li
 	return list, err
 }
 
-func (repo *FileLogRepository) FindFirst(predicate utils.Predicate[*Question]) (question *Question, exists bool) {
+func (repo *FileLogRepository) FindFirst(predicate predicates.Predicate[*Question]) (question *Question, exists bool) {
 	for _, question := range repo.values {
 		if predicate(question) {
 			return question, true
@@ -98,7 +100,7 @@ func (repo *FileLogRepository) FindFirst(predicate utils.Predicate[*Question]) (
 	return question, false
 }
 
-func (repo *FileLogRepository) Contains(predicate utils.Predicate[*Question]) bool {
+func (repo *FileLogRepository) Contains(predicate predicates.Predicate[*Question]) bool {
 	_, exists := repo.FindFirst(predicate)
 	return exists
 }

@@ -2,7 +2,7 @@ package history
 
 import (
 	"github.com/google/uuid"
-	"github.com/mwildt/ceh-utils/pkg/utils"
+	"github.com/mwildt/go-http/httputils"
 	"github.com/mwildt/go-http/routing"
 	"net/http"
 	"strconv"
@@ -30,13 +30,13 @@ func (controller *Controller) GetHistory(w http.ResponseWriter, r *http.Request)
 	}
 
 	if idString, exists := routing.GetParameter(r.Context(), "historyId"); !exists {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if historyId, err := uuid.Parse(idString); err != nil {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if hist, exists := controller.repo.FindFirst(r.Context(), IdEquals(historyId)); !exists {
-		utils.NotFound(w, r)
+		httputils.NotFound(w, r)
 	} else {
-		utils.OkJson(w, r, responseDTO{Id: hist.Id, Total: hist.Size()})
+		httputils.OkJson(w, r, responseDTO{Id: hist.Id, Total: hist.Size()})
 	}
 }
 
@@ -50,19 +50,19 @@ func (controller *Controller) GetHistoryItem(w http.ResponseWriter, r *http.Requ
 	}
 
 	if idString, exists := routing.GetParameter(r.Context(), "historyId"); !exists {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if historyId, err := uuid.Parse(idString); err != nil {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if idxString, exists := routing.GetParameter(r.Context(), "historyIndex"); !exists {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if historyIndex, err := strconv.Atoi(idxString); err != nil {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if hist, exists := controller.repo.FindFirst(r.Context(), IdEquals(historyId)); !exists {
-		utils.NotFound(w, r)
+		httputils.NotFound(w, r)
 	} else if found, item := hist.HistoryItemAt(historyIndex); !found {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
-		utils.OkJson(w, r, responseDTO{
+		httputils.OkJson(w, r, responseDTO{
 			Id:             hist.Id,
 			ChallengeId:    item.ChallengeId,
 			ChallengeIndex: historyIndex,

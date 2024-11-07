@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mwildt/ceh-utils/pkg/utils"
+	"github.com/ohrenpiraten/go-collections/predicates"
 	"os"
 	"sync"
 )
 
 type Repository interface {
 	Save(context.Context, *Training) (*Training, error)
-	FindAllBy(ctx context.Context, predicate utils.Predicate[*Training]) ([]*Training, error)
-	FindFirst(ctx context.Context, predicate utils.Predicate[*Training]) (*Training, bool)
+	FindAllBy(ctx context.Context, predicate predicates.Predicate[*Training]) ([]*Training, error)
+	FindFirst(ctx context.Context, predicate predicates.Predicate[*Training]) (*Training, bool)
 }
 
-func IdEquals(value uuid.UUID) utils.Predicate[*Training] {
+func IdEquals(value uuid.UUID) predicates.Predicate[*Training] {
 	return func(q *Training) bool {
 		return value == q.Id
 	}
@@ -145,7 +146,7 @@ func (repo *fileRepository) Save(ctx context.Context, training *Training) (_ *Tr
 	return training, err
 }
 
-func (repo *fileRepository) FindAllBy(ctx context.Context, predicate utils.Predicate[*Training]) (list []*Training, err error) {
+func (repo *fileRepository) FindAllBy(ctx context.Context, predicate predicates.Predicate[*Training]) (list []*Training, err error) {
 	for _, training := range repo.values {
 		if predicate(training) {
 			list = append(list, training)
@@ -154,7 +155,7 @@ func (repo *fileRepository) FindAllBy(ctx context.Context, predicate utils.Predi
 	return list, err
 }
 
-func (repo *fileRepository) FindFirst(ctx context.Context, predicate utils.Predicate[*Training]) (*Training, bool) {
+func (repo *fileRepository) FindFirst(ctx context.Context, predicate predicates.Predicate[*Training]) (*Training, bool) {
 	for _, training := range repo.values {
 		if predicate(training) {
 			return training, true

@@ -5,6 +5,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/mwildt/ceh-utils/pkg/events"
 	"github.com/mwildt/ceh-utils/pkg/utils"
+	"github.com/ohrenpiraten/go-collections/collections"
+	"github.com/ohrenpiraten/go-collections/predicates"
 	"sort"
 	"time"
 )
@@ -23,7 +25,7 @@ type TrainingChallenge struct {
 	Count     int
 }
 
-func TrainingChallengeIdEquals(id uuid.UUID) utils.Predicate[*TrainingChallenge] {
+func TrainingChallengeIdEquals(id uuid.UUID) predicates.Predicate[*TrainingChallenge] {
 	return func(q *TrainingChallenge) bool {
 		return q.Id == id
 	}
@@ -31,25 +33,25 @@ func TrainingChallengeIdEquals(id uuid.UUID) utils.Predicate[*TrainingChallenge]
 
 type ChallengeProvider func(excludeIds []uuid.UUID) (Challenge, error)
 
-func Initial() utils.Predicate[*TrainingChallenge] {
+func Initial() predicates.Predicate[*TrainingChallenge] {
 	return func(q *TrainingChallenge) bool {
 		return q.Level == 0 && !q.Done
 	}
 }
 
-func Proceeding() utils.Predicate[*TrainingChallenge] {
+func Proceeding() predicates.Predicate[*TrainingChallenge] {
 	return func(q *TrainingChallenge) bool {
 		return q.Level > 0 && !q.Done
 	}
 }
 
-func Done() utils.Predicate[*TrainingChallenge] {
+func Done() predicates.Predicate[*TrainingChallenge] {
 	return func(q *TrainingChallenge) bool {
 		return q.Done
 	}
 }
 
-func notPending(cutoff time.Time) utils.Predicate[*TrainingChallenge] {
+func notPending(cutoff time.Time) predicates.Predicate[*TrainingChallenge] {
 	return func(q *TrainingChallenge) bool {
 		return q.Timestamp.Before(cutoff) && !q.Done
 	}
@@ -161,7 +163,7 @@ func CreateTraining(nextChallenge ChallengeProvider) (training *Training, err er
 
 func (training *Training) Next(answerIds []uuid.UUID, nextChallenge ChallengeProvider) (success bool, err error) {
 
-	success = utils.MutualContainment(training.CurrentChallenge.Answer, answerIds)
+	success = collections.MutualContainment(training.CurrentChallenge.Answer, answerIds)
 
 	training.events = append(training.events, event{"training.updated", UpdatedEvent{
 		TrainingId:  training.Id,
@@ -204,7 +206,7 @@ func (training *Training) Next(answerIds []uuid.UUID, nextChallenge ChallengePro
 }
 
 func (training *Training) getExcludeIds() []uuid.UUID {
-	return utils.Map(training.Challenges, getChallengeId)
+	return collections.Map(training.Challenges, getChallengeId)
 }
 
 func (training *Training) findRetryCandidate() (candidate *TrainingChallenge, found bool) {
@@ -242,19 +244,19 @@ func (training *Training) updateChallengeAnswer(challengeId uuid.UUID, answerId 
 	}
 }
 
-func (training *Training) GetChallengeCount(predicate utils.Predicate[*TrainingChallenge]) int {
-	return utils.Count(training.Challenges, predicate)
+func (training *Training) GetChallengeCount(predicate predicates.Predicate[*TrainingChallenge]) int {
+	return collections.Count(training.Challenges, predicate)
 }
 
-func ContainsChallenge(challengeId uuid.UUID) utils.Predicate[*Training] {
+func ContainsChallenge(challengeId uuid.UUID) predicates.Predicate[*Training] {
 	return func(q *Training) bool {
-		return q.CurrentChallenge.Id == challengeId || utils.AnyMatch(q.Challenges, TrainingChallengeIdEquals(challengeId))
+		return q.CurrentChallenge.Id == challengeId || collections.AnyMatch(q.Challenges, TrainingChallengeIdEquals(challengeId))
 	}
 }
 
 func filterCandidates(trainingChallenges []*TrainingChallenge) (candidate *TrainingChallenge, found bool) {
 	// erstmal alle rausfilter, die die cutoff grente noch nicht erreich haben
-	candidates := utils.Filter(trainingChallenges, notPending(time.Now()))
+	candidates := collections.Filter(trainingChallenges, notPending(time.Now()))
 
 	// und dann muss das noch nach den passenden elementen
 	sort.Slice(candidates, func(i, j int) bool {

@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mwildt/ceh-utils/pkg/questions"
-	"github.com/mwildt/ceh-utils/pkg/utils"
+	"github.com/ohrenpiraten/go-collections/collections"
+	"github.com/ohrenpiraten/go-collections/predicates"
 	"log"
 	"os"
 	"path"
@@ -34,7 +35,7 @@ func main() {
 
 	if err != nil {
 		log.Fatal(err)
-	} else if all, err := repo.FindAll(utils.True[*questions.Question]()); err != nil {
+	} else if all, err := repo.FindAll(predicates.True[*questions.Question]()); err != nil {
 		log.Fatal(err)
 	} else {
 		var records []record
@@ -55,7 +56,7 @@ func main() {
 
 func transformRecord(q *questions.Question) (record, error) {
 
-	media, err := utils.MapError(q.Media, func(m string) (string, error) {
+	media, err := collections.MapError(q.Media, func(m string) (string, error) {
 		if imageData, err := os.ReadFile(path.Join("config/ceh-12-cehtest.org/media", m)); err != nil {
 			return "", err
 		} else {
@@ -70,7 +71,7 @@ func transformRecord(q *questions.Question) (record, error) {
 	return record{
 		Id:   q.Id,
 		Text: q.Question,
-		Options: utils.Map(q.Options, func(opt questions.Option) option {
+		Options: collections.Map(q.Options, func(opt questions.Option) option {
 			return option{
 				Id:   opt.Id,
 				Text: opt.Option,

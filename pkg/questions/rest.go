@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/mwildt/ceh-utils/pkg/utils"
+	"github.com/mwildt/go-http/httputils"
 	"github.com/mwildt/go-http/routing"
+	"github.com/ohrenpiraten/go-collections/collections"
+	"github.com/ohrenpiraten/go-collections/predicates"
 	"net/http"
 )
 
@@ -31,20 +34,20 @@ func (controller *Controller) Routing(router routing.Routing) {
 
 func (controller *Controller) GetById(writer http.ResponseWriter, request *http.Request) {
 	if questionId, err := readUuid("questionId", request); err != nil {
-		utils.BadRequest(writer, request)
+		httputils.BadRequest(writer, request)
 	} else if question, exists := controller.repo.FindFirst(IdEquals(questionId)); !exists {
-		utils.NotFound(writer, request)
+		httputils.NotFound(writer, request)
 	} else {
-		utils.OkJson(writer, request, mapToResponse(question))
+		httputils.OkJson(writer, request, mapToResponse(question))
 	}
 }
 
 func (controller *Controller) GetAll(writer http.ResponseWriter, request *http.Request) {
-	questions, err := controller.repo.FindAll(True())
+	questions, err := controller.repo.FindAll(predicates.True[*Question]())
 	if err != nil {
-		utils.InternalServerError(writer, request)
+		httputils.InternalServerError(writer, request)
 	} else {
-		utils.OkJson(writer, request, utils.Map(questions, mapToResponse))
+		httputils.OkJson(writer, request, collections.Map(questions, mapToResponse))
 	}
 }
 
@@ -56,22 +59,22 @@ func (controller *Controller) PatchById(writer http.ResponseWriter, request *htt
 	}
 
 	if questionId, err := readUuid("questionId", request); err != nil {
-		utils.BadRequest(writer, request)
+		httputils.BadRequest(writer, request)
 	} else if requestDTO, err := readJsonPayload[patchByIdRequestDTO](request); err != nil {
-		utils.BadRequest(writer, request)
+		httputils.BadRequest(writer, request)
 	} else if question, exists := controller.repo.FindFirst(IdEquals(questionId)); !exists {
-		utils.NotFound(writer, request)
+		httputils.NotFound(writer, request)
 	} else {
-		updated, err := question.Update(requestDTO.Text, utils.Map(requestDTO.Choices, func(c answerResponse) Option {
+		updated, err := question.Update(requestDTO.Text, collections.Map(requestDTO.Choices, func(c answerResponse) Option {
 			return Option{Option: c.Text, Id: c.Id}
 		}), requestDTO.Answer)
 
 		if err != nil {
-			utils.InternalServerError(writer, request)
+			httputils.InternalServerError(writer, request)
 		} else if updated, err := controller.repo.Save(updated); err != nil {
-			utils.InternalServerError(writer, request)
+			httputils.InternalServerError(writer, request)
 		} else {
-			utils.OkJson(writer, request, mapToResponse(updated))
+			httputils.OkJson(writer, request, mapToResponse(updated))
 		}
 	}
 }
@@ -108,7 +111,7 @@ func mapToResponse(question *Question) response {
 	return response{
 		Id:   question.Id,
 		Text: question.Question,
-		Choices: utils.Map(question.Options, func(opt Option) answerResponse {
+		Choices: collections.Map(question.Options, func(opt Option) answerResponse {
 			return answerResponse{opt.Id, opt.Option}
 		}),
 		Media: question.Media,
@@ -124,7 +127,7 @@ func apiSecured() routing.Filter {
 			utils.NewStdLogger("apiSecurity").Warn("Unable to find apiKey, operation denied")
 		}
 		if apiKey == "" || apiToken != base64.StdEncoding.EncodeToString([]byte(apiKey)) {
-			utils.StatusUnauthorized(w, r)
+			httputils.Unauthorized(w, r)
 		} else {
 			next(w, r)
 		}

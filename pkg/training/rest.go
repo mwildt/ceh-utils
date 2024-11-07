@@ -3,8 +3,10 @@ package training
 import (
 	"encoding/json"
 	"github.com/google/uuid"
-	"github.com/mwildt/ceh-utils/pkg/utils"
+	"github.com/mwildt/go-http/httputils"
 	"github.com/mwildt/go-http/routing"
+	"github.com/ohrenpiraten/go-collections/collections"
+	"github.com/ohrenpiraten/go-collections/predicates"
 	"net/http"
 	"time"
 )
@@ -31,22 +33,22 @@ func (controller *Controller) Routing(router routing.Routing) {
 
 func (controller *Controller) Post(writer http.ResponseWriter, request *http.Request) {
 	if training, err := CreateTraining(controller.challengeProvider); err != nil {
-		utils.InternalServerError(writer, request)
+		httputils.InternalServerError(writer, request)
 	} else if training, err := controller.repo.Save(request.Context(), training); err != nil {
-		utils.InternalServerError(writer, request)
+		httputils.InternalServerError(writer, request)
 	} else {
-		utils.CreatedJson(writer, request, createResponseDTO{
+		httputils.CreatedJson(writer, request, createResponseDTO{
 			Id: training.Id,
 		})
 	}
 }
 
 func (controller *Controller) GetAll(writer http.ResponseWriter, request *http.Request) {
-	trainings, err := controller.repo.FindAllBy(request.Context(), utils.True[*Training]())
+	trainings, err := controller.repo.FindAllBy(request.Context(), predicates.True[*Training]())
 	if err != nil {
-		utils.InternalServerError(writer, request)
+		httputils.InternalServerError(writer, request)
 	} else {
-		utils.CreatedJson(writer, request, utils.Map(trainings, mapGetTrainingDTO))
+		httputils.CreatedJson(writer, request, collections.Map(trainings, mapGetTrainingDTO))
 	}
 }
 
@@ -85,31 +87,31 @@ func (controller *Controller) PatchById(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if trainingId, exists := routing.GetParameter(r.Context(), "trainingId"); !exists {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if trainingUuid, err := uuid.Parse(trainingId); err != nil {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if training, exists := controller.repo.FindFirst(r.Context(), IdEquals(trainingUuid)); !exists {
-		utils.NotFound(w, r)
+		httputils.NotFound(w, r)
 	} else if err := json.NewDecoder(r.Body).Decode(&requestDTO); err != nil {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if success, err := training.Next(requestDTO.Answer, controller.challengeProvider); err != nil {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if training, err = controller.repo.Save(r.Context(), training); err != nil {
-		utils.InternalServerError(w, r)
+		httputils.InternalServerError(w, r)
 	} else {
-		utils.OkJson(w, r, responseDTO{mapGetTrainingDTO(training), success})
+		httputils.OkJson(w, r, responseDTO{mapGetTrainingDTO(training), success})
 	}
 }
 
 func (controller *Controller) GetById(w http.ResponseWriter, r *http.Request) {
 	if trainingId, exists := routing.GetParameter(r.Context(), "trainingId"); !exists {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if trainingUuid, err := uuid.Parse(trainingId); err != nil {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if training, exists := controller.repo.FindFirst(r.Context(), IdEquals(trainingUuid)); !exists {
-		utils.NotFound(w, r)
+		httputils.NotFound(w, r)
 	} else {
-		utils.OkJson(w, r, mapGetTrainingDTO(training))
+		httputils.OkJson(w, r, mapGetTrainingDTO(training))
 	}
 }
 
@@ -132,15 +134,15 @@ func (controller *Controller) GetChallengesById(w http.ResponseWriter, r *http.R
 	}
 
 	if trainingId, exists := routing.GetParameter(r.Context(), "trainingId"); !exists {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if trainingUuid, err := uuid.Parse(trainingId); err != nil {
-		utils.BadRequest(w, r)
+		httputils.BadRequest(w, r)
 	} else if training, exists := controller.repo.FindFirst(r.Context(), IdEquals(trainingUuid)); !exists {
-		utils.NotFound(w, r)
+		httputils.NotFound(w, r)
 	} else {
-		utils.OkJson(w, r, responseDTO{
+		httputils.OkJson(w, r, responseDTO{
 			Id:         training.Id,
-			Challenges: utils.Map(training.Challenges, mapChallengeDTO),
+			Challenges: collections.Map(training.Challenges, mapChallengeDTO),
 		})
 	}
 }
